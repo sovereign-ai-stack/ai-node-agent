@@ -1,0 +1,4 @@
+# Lightweight dependencies for Worker Node Agent
+# Python standard library is primarily used. 
+# pynvml is recommended for direct NVIDIA Management Library metrics.
+pynvml>=11.5.0

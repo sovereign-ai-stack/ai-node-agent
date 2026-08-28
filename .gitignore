@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Model weights, caches & downloads
+models/
+*.safetensors
+*.bin
+*.pt
+*.onnx
+.cache/
+huggingface/
+
+# Generated runtime configs & exports
+docker-compose.node.yml
+compose.export.yml
+
+# Environment & Secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Logs & temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
