@@ -135,9 +135,10 @@ def main():
         print(f"\n✅ Standalone Docker Compose exported to: {os.path.abspath(args.export_compose)}")
         return 0
 
-    # Step 3: Check Docker Requirements
-    if not report.docker_installed:
-        print("\n❌ Error: Docker is not installed or the Docker daemon is not running.")
+    # Step 3: Check and Auto-Start Docker Engine if stopped
+    docker_ready = ensure_docker_running(timeout_sec=60)
+    if not docker_ready:
+        print("\n❌ Error: Docker daemon is not accessible. Please start Docker manually.")
         return 1
 
     if tier.get("requires_gpu", True) and not report.nvidia_runtime_available:

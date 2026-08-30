@@ -1,29 +1,19 @@
 #!/usr/bin/env python3
 """
-Hardware Detection Engine for Distributed vLLM Nodes.
-Detects CPU, System RAM, NVIDIA GPUs, VRAM (Total & Free), CUDA capability,
-and Docker / NVIDIA Container Toolkit runtime availability.
-
-Supports 3 detection backends in priority order:
-1. pynvml (NVIDIA Management Library - direct C bindings, most accurate)
-2. torch.cuda (PyTorch CUDA API)
-3. nvidia-smi (CLI fallback, no Python dependencies required)
+Hardware Detection & Capability Assessment Module.
+Auto-probes GPU, CPU, RAM, Docker and NVIDIA Container Runtime.
+Includes automatic Docker Desktop auto-start for Windows and Linux.
 """
 
-import ctypes
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
-from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Optional, Tuple
-
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+import time
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -32,8 +22,8 @@ class GPUInfo:
     name: str
     total_vram_gb: float
     free_vram_gb: float
-    compute_capability: str = "Unknown"
-    driver_version: str = "Unknown"
+    compute_capability: str
+    driver_version: str
     temperature_c: Optional[int] = None
 
 
@@ -53,49 +43,43 @@ class SystemHardwareReport:
     detection_backend: str
 
 
-def run_command(cmd: List[str], timeout: int = 10) -> Optional[subprocess.CompletedProcess]:
-    """Execute a CLI command safely with timeout handling."""
+def run_command(cmd: List[str], timeout_sec: int = 10) -> Optional[subprocess.CompletedProcess]:
+    """Runs a shell command safely with timeout handling."""
     try:
         return subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout,
+            timeout=timeout_sec,
+            check=False,
         )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except (subprocess.SubprocessError, FileNotFoundError, OSError):
         return None
 
 
 def get_system_ram_gb() -> float:
-    """Detect total physical RAM across Windows and Linux."""
+    """Detect total system RAM in GB."""
+    try:
+        import psutil
+        return round(psutil.virtual_memory().total / (1024**3), 2)
+    except ImportError:
+        pass
+
     if sys.platform.startswith("win"):
-        class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [
-                ("dwLength", ctypes.c_ulong),
-                ("dwMemoryLoad", ctypes.c_ulong),
-                ("ullTotalPhys", ctypes.c_ulonglong),
-                ("ullAvailPhys", ctypes.c_ulonglong),
-                ("ullTotalPageFile", ctypes.c_ulonglong),
-                ("ullAvailPageFile", ctypes.c_ulonglong),
-                ("ullTotalVirtual", ctypes.c_ulonglong),
-                ("ullAvailVirtual", ctypes.c_ulonglong),
-                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
-            ]
-
-        m = MEMORYSTATUSEX()
-        m.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
-        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
-            return round(m.ullTotalPhys / (1024**3), 2)
-        return 0.0
-
-    if hasattr(os, "sysconf"):
         try:
-            pages = os.sysconf("SC_PHYS_PAGES")
-            page_size = os.sysconf("SC_PAGE_SIZE")
-            return round((pages * page_size) / (1024**3), 2)
-        except (ValueError, OSError):
+            res = run_command(["powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory"])
+            if res and res.returncode == 0 and res.stdout.strip().isdigit():
+                return round(int(res.stdout.strip()) / (1024**3), 2)
+        except Exception:
+            pass
+    elif sys.platform.startswith("linux"):
+        try:
+            with open("/proc/meminfo", "r") as f:
+                for line in f:
+                    if line.startswith("MemTotal:"):
+                        kb = int(line.split()[1])
+                        return round(kb / (1024**2), 2)
+        except Exception:
             pass
     return 0.0
 
@@ -160,7 +144,7 @@ def detect_gpus_pynvml() -> Optional[List[GPUInfo]]:
                     total_vram_gb=total_gb,
                     free_vram_gb=free_gb,
                     compute_capability=cc,
-                    driver_version=str(driver_ver),
+                    driver_version=driver_ver,
                     temperature_c=temp,
                 )
             )
@@ -171,7 +155,7 @@ def detect_gpus_pynvml() -> Optional[List[GPUInfo]]:
 
 
 def detect_gpus_torch() -> Optional[List[GPUInfo]]:
-    """Backend 2: Detect GPUs using PyTorch CUDA runtime."""
+    """Backend 2: Detect GPUs via PyTorch CUDA runtime."""
     try:
         import torch
         if not torch.cuda.is_available():
@@ -180,21 +164,20 @@ def detect_gpus_torch() -> Optional[List[GPUInfo]]:
         count = torch.cuda.device_count()
         gpus = []
         for i in range(count):
-            name = torch.cuda.get_device_name(i)
             props = torch.cuda.get_device_properties(i)
             total_gb = round(props.total_memory / (1024**3), 2)
-            # Memory allocated vs total
-            free_gb = total_gb - round(torch.cuda.memory_allocated(i) / (1024**3), 2)
-            cc = f"{props.major}.{props.minor}"
-            
+            free_bytes = torch.cuda.mem_get_info(i)[0] if hasattr(torch.cuda, "mem_get_info") else props.total_memory
+            free_gb = round(free_bytes / (1024**3), 2)
+
             gpus.append(
                 GPUInfo(
                     index=i,
-                    name=name,
+                    name=props.name,
                     total_vram_gb=total_gb,
                     free_vram_gb=free_gb,
-                    compute_capability=cc,
+                    compute_capability=f"{props.major}.{props.minor}",
                     driver_version="PyTorch CUDA Runtime",
+                    temperature_c=None,
                 )
             )
         return gpus if gpus else None
@@ -253,6 +236,69 @@ def check_docker_environment() -> Tuple[bool, str, bool]:
         nvidia_runtime = True
         
     return True, docker_version, nvidia_runtime
+
+
+def ensure_docker_running(timeout_sec: int = 60) -> bool:
+    """
+    Intelligently verifies if Docker is running.
+    If installed but stopped, it automatically launches Docker Desktop in the background
+    and waits for the daemon to become ready!
+    """
+    is_running, ver, _ = check_docker_environment()
+    if is_running:
+        return True
+
+    print("\n🐳 Docker is not currently responding. Checking for local installation...")
+
+    if sys.platform.startswith("win"):
+        # Common Docker Desktop installation locations on Windows
+        possible_paths = [
+            r"C:\Program Files\Docker\Docker\Docker Desktop.exe",
+            r"C:\Program Files (x86)\Docker\Docker\Docker Desktop.exe",
+            os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), r"Docker\Docker\Docker Desktop.exe"),
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Docker\Docker Desktop.exe"),
+        ]
+
+        exe_path = next((p for p in possible_paths if os.path.exists(p)), None)
+
+        if exe_path:
+            print(f"  🚀 Found Docker Desktop at: {exe_path}")
+            print("  ⏳ Launching Docker Desktop in background...")
+            try:
+                subprocess.Popen([exe_path], close_fds=True)
+            except Exception as e:
+                print(f"  ⚠️ Could not launch Docker executable: {e}")
+
+            # Poll until Docker daemon responds
+            start_t = time.time()
+            while time.time() - start_t < timeout_sec:
+                time.sleep(3)
+                elapsed = int(time.time() - start_t)
+                is_running, ver, _ = check_docker_environment()
+                if is_running:
+                    print(f"\n  ✅ Docker Desktop is now running and operational (v{ver})!")
+                    return True
+                print(f"\r  ⏳ Waiting for Docker engine to initialize... ({elapsed}s / {timeout_sec}s)", end="", flush=True)
+
+            print("\n  ❌ Timed out waiting for Docker Desktop to start.")
+            return False
+        else:
+            print("  ❌ Docker Desktop executable not found in standard paths.")
+            print("  📥 Please install Docker Desktop from: https://www.docker.com/products/docker-desktop/")
+            return False
+
+    elif sys.platform.startswith("linux"):
+        print("  ⏳ Attempting to start Docker service via systemctl...")
+        run_command(["sudo", "systemctl", "start", "docker"])
+        time.sleep(3)
+        is_running, ver, _ = check_docker_environment()
+        if is_running:
+            print(f"  ✅ Docker service started successfully (v{ver})!")
+            return True
+        print("  ❌ Could not auto-start Docker service. Run: sudo systemctl start docker")
+        return False
+
+    return False
 
 
 def detect_hardware() -> SystemHardwareReport:
