@@ -51,7 +51,7 @@ from auto_register import (
     get_local_ip,
     wait_for_vllm_ready,
 )
-from hardware_detector import detect_hardware, print_hardware_summary
+from hardware_detector import detect_hardware, print_hardware_summary, ensure_docker_running
 from vllm_manager import VLLMManager
 
 CATALOG_DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_catalog.json")
