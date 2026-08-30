@@ -3,15 +3,18 @@
 vLLM Deployment & Lifecycle Manager.
 Responsible for:
 1. Selecting the optimal model tier based on available VRAM.
-2. Calculating Tensor Parallel (TP) size across multi-GPU setups.
-3. Generating optimized Docker Compose configurations or Docker run commands.
-4. Starting, monitoring, and stopping vLLM containers.
+2. Checking local Docker images, local .tar archives, and local model weights.
+3. Calculating Tensor Parallel (TP) size across multi-GPU setups.
+4. Generating optimized Docker Compose configurations or Docker run commands.
+5. Starting, monitoring, and stopping vLLM containers.
 """
 
+import glob
 import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from hardware_detector import SystemHardwareReport
@@ -48,7 +51,6 @@ class VLLMManager:
             return cpu_tier, 1
 
         effective_vram = max(0.0, report.total_vram_gb - reserve)
-        max_single = max(0.0, report.max_single_gpu_vram_gb - reserve)
 
         # Sort tiers ascending by min_vram_gb
         sorted_tiers = sorted(tiers, key=lambda x: x["min_vram_gb"])
@@ -56,7 +58,6 @@ class VLLMManager:
 
         for t in sorted_tiers:
             if effective_vram >= t["min_vram_gb"]:
-                # Check if single GPU fits or if multi-GPU tensor parallel is required
                 selected_tier = t
 
         tp = self._calculate_tp(report, selected_tier)
@@ -69,8 +70,91 @@ class VLLMManager:
             return 1
         
         configured_tp = tier.get("tensor_parallel_size", 1)
-        # Cap TP to available GPU count
         return min(gpu_count, configured_tp) if configured_tp > 1 else 1
+
+    # ----------------------------------------------------------------------
+    # Smart Local Resource Verification (Images, Archives & Model Weights)
+    # ----------------------------------------------------------------------
+
+    def is_docker_image_present(self, image_name: str) -> bool:
+        """Checks if a Docker image is already available in the local Docker daemon."""
+        try:
+            res = subprocess.run(
+                ["docker", "image", "inspect", image_name],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            return res.returncode == 0
+        except Exception:
+            return False
+
+    def find_local_tar_archives(self, search_dirs: Optional[List[str]] = None) -> List[str]:
+        """Scans current and common directories for saved Docker image tar files."""
+        dirs = search_dirs or [".", "..", "D:/", "D:/models", "D:/docker_images", "C:/docker_images"]
+        found = []
+        for d in dirs:
+            if os.path.exists(d):
+                for ext in ["*.tar", "*.tar.gz"]:
+                    for f in glob.glob(os.path.join(d, ext)):
+                        if "vllm" in os.path.basename(f).lower():
+                            found.append(os.path.abspath(f))
+        return list(set(found))
+
+    def load_docker_tar_image(self, tar_path: str) -> bool:
+        """Loads a Docker image archive (.tar) into Docker daemon without internet access."""
+        print(f"📦 Loading Docker image from local archive: {tar_path} ...")
+        try:
+            res = subprocess.run(["docker", "load", "-i", tar_path])
+            return res.returncode == 0
+        except Exception as e:
+            print(f"❌ Error loading tar archive: {e}")
+            return False
+
+    def find_local_model_weights(self, model_identifier: str) -> Optional[str]:
+        """
+        Intelligently searches for local model weights on disk:
+        1. Subdirectories in `./models/` or `D:/models/`
+        2. Hugging Face Hub cache directory (~/.cache/huggingface/hub)
+        """
+        clean_name = model_identifier.split("/")[-1]
+        hf_repo_formatted = f"models--{model_identifier.replace('/', '--')}"
+
+        candidates = [
+            os.path.join(".", "models", clean_name),
+            os.path.join(".", "models", model_identifier),
+            os.path.join("D:/models", clean_name),
+            os.path.join("D:/models", model_identifier),
+            os.path.join(os.path.expanduser("~"), "models", clean_name),
+            os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", hf_repo_formatted, "snapshots"),
+        ]
+
+        for cand in candidates:
+            if os.path.exists(cand):
+                # If it's a snapshots folder in HF cache, grab the latest snapshot subfolder
+                if "snapshots" in cand:
+                    subdirs = [os.path.join(cand, s) for s in os.listdir(cand) if os.path.isdir(os.path.join(cand, s))]
+                    if subdirs:
+                        latest_snap = subdirs[0]
+                        if self._is_valid_model_dir(latest_snap):
+                            return os.path.abspath(latest_snap)
+                elif self._is_valid_model_dir(cand):
+                    return os.path.abspath(cand)
+
+        return None
+
+    def _is_valid_model_dir(self, directory: str) -> bool:
+        """Validates that a directory contains actual LLM model files."""
+        if not os.path.isdir(directory):
+            return False
+        files = os.listdir(directory)
+        has_config = "config.json" in files or "model.json" in files
+        has_weights = any(f.endswith((".safetensors", ".bin", ".pt", ".gguf")) for f in files)
+        return has_config or has_weights
+
+    # ----------------------------------------------------------------------
+    # Docker Command & Compose Generation
+    # ----------------------------------------------------------------------
 
     def build_docker_command(
         self,

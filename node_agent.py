@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 """
-Enterprise vLLM Node Agent.
+Enterprise vLLM Node Agent (Smart Autonomous & Local-First).
 The all-in-one automation script for deploying, managing, and auto-registering
 local AI nodes to the centralized gateway.
 
+Features:
+  1. Hardware Diagnostic (VRAM, CUDA, Cores, RAM).
+  2. Local-First Docker Image Discovery (Inspects Docker daemon, searches .tar archives).
+  3. Local-First Model Weight Discovery (Scans ./models, D:/models, HF Cache before downloading).
+  4. Interactive confirmation & fallback to online downloads.
+  5. Dynamic Central Gateway Auto-Registration and Heartbeat.
+
 Usage Examples:
-  # 1. Full Auto: Detect GPU, pick model, start vLLM, register & heartbeat
-  python node_agent.py --gateway-url http://192.168.1.50:8200
+  # 1. Smart Interactive Boot:
+  python node_agent.py --gateway-url http://localhost:8200
 
-  # 2. Air-gapped offline mode with pre-downloaded weights:
-  python node_agent.py --gateway-url http://192.168.1.50:8200 --local-model-path /opt/models/Qwen2.5-7B-AWQ
+  # 2. Fully non-interactive / unattended mode:
+  python node_agent.py --gateway-url http://localhost:8200 --non-interactive
 
-  # 3. Only generate docker-compose.yml for manual inspection / DevOps pipeline:
-  python node_agent.py --export-compose ./docker-compose.node.yml
+  # 3. Direct local model & local tar:
+  python node_agent.py --gateway-url http://localhost:8200 --local-model-path D:/models/qwen7b --image-tar D:/vllm.tar
 
-  # 4. Probe hardware only:
+  # 4. Diagnostic only:
   python node_agent.py --probe-only
 """
 
@@ -50,14 +57,27 @@ from vllm_manager import VLLMManager
 CATALOG_DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_catalog.json")
 
 
+def prompt_user(question: str, default: str = "y") -> bool:
+    """Helper for user confirmation prompts."""
+    try:
+        ans = input(f"{question} [{default.upper()}/{('n' if default == 'y' else 'y')}]: ").strip().lower()
+        if not ans:
+            ans = default.lower()
+        return ans in ("y", "yes")
+    except (KeyboardInterrupt, EOFError):
+        print("\nAborted.")
+        sys.exit(0)
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Smart Node Agent: Hardware Probe, vLLM Deployer, and Central Auto-Registration"
+        description="Smart Node Agent: Hardware Probe, Local-First vLLM Deployer, and Central Auto-Registration"
     )
     # Hardware & Model options
     parser.add_argument("--catalog", default=CATALOG_DEFAULT_PATH, help="Path to model catalog JSON")
     parser.add_argument("--tier", default=None, help="Force a specific tier ID (e.g. tier-8gb-vram)")
     parser.add_argument("--local-model-path", default=None, help="Local directory containing model weights (air-gapped)")
+    parser.add_argument("--image-tar", default=None, help="Path to a local vllm Docker image .tar archive to load")
     parser.add_argument("--hf-token", default=None, help="Hugging Face token for gated models")
     parser.add_argument("--served-name", default=None, help="Custom served model name alias (default: from catalog)")
     
@@ -68,6 +88,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print docker command without executing")
     parser.add_argument("--probe-only", action="store_true", help="Run hardware diagnostic and exit")
     parser.add_argument("--force-cpu", action="store_true", help="Allow running on CPU even if performance is low")
+    parser.add_argument("-y", "--non-interactive", action="store_true", help="Run in non-interactive mode (auto-accept prompts)")
     
     # Registration & Gateway options
     parser.add_argument("--gateway-url", default=None, help="Central Gateway / Registry URL (e.g. http://192.168.1.100:8200)")
@@ -92,12 +113,11 @@ def main():
 
     print("\n🎯 Phase 2: Autonomous Model & Optimization Selection")
     print(f"  • Selected Tier       : {tier['name']} ({tier['id']})")
-    print(f"  • Target Model        : {args.local_model_path or tier['recommended_model']}")
+    print(f"  • Recommended Model   : {tier['recommended_model']}")
     print(f"  • Quantization Engine : {tier.get('quantization') or 'None (Standard Precision)'}")
     print(f"  • Context Length      : {tier['max_model_len']} tokens")
     print(f"  • Tensor Parallel Size: {tp_size} GPU(s)")
     print(f"  • Memory Utilization  : {int(tier['gpu_memory_utilization'] * 100)}% of VRAM")
-    print(f"  • PagedAttention & Caching: Enabled")
 
     # If export docker compose requested
     if args.export_compose:
@@ -127,18 +147,73 @@ def main():
         if not args.force_cpu:
             return 1
 
-    # Step 4: Build and Launch Docker Container
+    # ----------------------------------------------------------------------
+    # Step 4: Smart Local Resource Discovery (Docker Image & Model Weights)
+    # ----------------------------------------------------------------------
+    print("\n🔍 Phase 3: Checking Local Resources (Offline-First)")
+    vllm_image = manager.catalog.get("default_vllm_image", "vllm/vllm-openai:latest")
+
+    # 4.1 Check Docker Image locally
+    has_image = manager.is_docker_image_present(vllm_image)
+    if has_image:
+        print(f"  ✅ vLLM Docker image found in local Docker: {vllm_image}")
+    else:
+        print(f"  ⚠️ vLLM Docker image '{vllm_image}' is NOT present in local Docker.")
+        
+        # Check if user passed an explicit .tar file
+        if args.image_tar and os.path.exists(args.image_tar):
+            manager.load_docker_tar_image(args.image_tar)
+        else:
+            # Auto-search nearby directories for .tar files
+            local_tars = manager.find_local_tar_archives()
+            if local_tars:
+                print(f"  💡 Found local image archive(s) on disk:")
+                for i, t in enumerate(local_tars, 1):
+                    print(f"     [{i}] {t}")
+                if args.non_interactive or prompt_user(f"  👉 Would you like to load '{local_tars[0]}' with docker load?"):
+                    manager.load_docker_tar_image(local_tars[0])
+            else:
+                if not args.non_interactive:
+                    print("  💡 If you have a saved 'vllm-image.tar' file, you can load it now.")
+                    user_tar = input("  👉 Enter path to .tar image file (or press Enter to pull from Docker Hub): ").strip()
+                    if user_tar and os.path.exists(user_tar):
+                        manager.load_docker_tar_image(user_tar)
+                    else:
+                        print("  🌐 Proceeding with online Docker Hub pull...")
+
+    # 4.2 Check Model Weights locally
+    resolved_model_path = args.local_model_path
+    if resolved_model_path and os.path.exists(resolved_model_path):
+        print(f"  ✅ Using specified local model directory: {os.path.abspath(resolved_model_path)}")
+    else:
+        # Auto-search on disk for the recommended model
+        detected_model_dir = manager.find_local_model_weights(tier["recommended_model"])
+        if detected_model_dir:
+            print(f"  ✅ Found local model weights for '{tier['recommended_model']}':")
+            print(f"     📁 Path: {detected_model_dir}")
+            resolved_model_path = detected_model_dir
+        else:
+            print(f"  ⚠️ Model weights for '{tier['recommended_model']}' not found in local cache.")
+            if not args.non_interactive:
+                user_mpath = input(f"  👉 Enter local path to model weights (or press Enter to auto-download from Hugging Face): ").strip()
+                if user_mpath and os.path.exists(user_mpath):
+                    resolved_model_path = user_mpath
+                    print(f"  ✅ Using local model directory: {os.path.abspath(resolved_model_path)}")
+                else:
+                    print(f"  🌐 Will auto-download '{tier['recommended_model']}' from Hugging Face into cache.")
+
+    # Step 5: Build and Launch Docker Container
     docker_cmd = manager.build_docker_command(
         tier=tier,
         tp_size=tp_size,
         port=args.port,
         container_name=args.container_name,
-        local_model_path=args.local_model_path,
+        local_model_path=resolved_model_path,
         hf_token=args.hf_token,
         custom_served_name=args.served_name,
     )
 
-    print("\n🐳 Phase 3: Launching vLLM Engine Container")
+    print("\n🐳 Phase 4: Launching vLLM Engine Container")
     print("  Command:")
     print("  " + " ".join(docker_cmd))
 
@@ -149,18 +224,18 @@ def main():
     # Remove any existing container with the same name if stopped/leftover
     subprocess.run(["docker", "rm", "-f", args.container_name], capture_output=True)
 
-    print("\n⏳ Starting container (pulling image if necessary)...")
+    print("\n⏳ Starting container...")
     proc = subprocess.run(docker_cmd)
     if proc.returncode != 0:
         print(f"\n❌ Docker launch failed with exit code {proc.returncode}")
         return proc.returncode
 
-    # Step 5: Wait for Health / Model Ready
+    # Step 6: Wait for Health / Model Ready
     host_ip = get_local_ip()
     local_api_base = f"http://localhost:{args.port}"
     remote_api_base = args.api_base or f"http://{host_ip}:{args.port}"
 
-    print(f"\n⏳ Phase 4: Validating vLLM Engine Initialization at {local_api_base} ...")
+    print(f"\n⏳ Phase 5: Validating vLLM Engine Initialization at {local_api_base} ...")
     is_ready = wait_for_vllm_ready(local_api_base, timeout_sec=400, interval_sec=5)
     if not is_ready:
         print("❌ Error: vLLM did not reach healthy state. Check docker logs:")
@@ -169,9 +244,9 @@ def main():
 
     print(f"✅ vLLM is operational and listening on {remote_api_base}")
 
-    # Step 6: Central Auto-Registration & Heartbeat Daemon
+    # Step 7: Central Auto-Registration & Heartbeat Daemon
     if args.gateway_url:
-        print(f"\n🌐 Phase 5: Autonomous Registration with Central Gateway ({args.gateway_url})")
+        print(f"\n🌐 Phase 6: Autonomous Registration with Central Gateway ({args.gateway_url})")
         node_id = args.node_id or f"node-{os.uname().nodename if hasattr(os, 'uname') else 'host'}-{uuid.uuid4().hex[:6]}"
         served_name = args.served_name or tier["served_model_name"]
 
