@@ -69,32 +69,61 @@ def prompt_user(question: str, default: str = "y") -> bool:
         sys.exit(0)
 
 
+def load_dotenv_file(filepath: str = ".env"):
+    """Reads key=value pairs from .env and injects into os.environ if not already set."""
+    # Check current directory and script directory
+    paths = [filepath, os.path.join(os.path.dirname(os.path.abspath(__file__)), filepath)]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or "=" not in line:
+                            continue
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip("'").strip('"')
+                        if k and k not in os.environ and v:
+                            os.environ[k] = v
+                break
+            except Exception:
+                pass
+
+
 def main():
+    load_dotenv_file(".env")
+
     parser = argparse.ArgumentParser(
         description="Smart Node Agent: Hardware Probe, Local-First vLLM Deployer, and Central Auto-Registration"
     )
     # Hardware & Model options
     parser.add_argument("--catalog", default=CATALOG_DEFAULT_PATH, help="Path to model catalog JSON")
     parser.add_argument("--tier", default=None, help="Force a specific tier ID (e.g. tier-8gb-vram)")
-    parser.add_argument("--local-model-path", default=None, help="Local directory containing model weights (air-gapped)")
-    parser.add_argument("--image-tar", default=None, help="Path to a local vllm Docker image .tar archive to load")
-    parser.add_argument("--hf-token", default=None, help="Hugging Face token for gated models")
+    parser.add_argument("--local-model-path", default=os.environ.get("LOCAL_MODEL_PATH"), help="Local directory containing model weights (air-gapped)")
+    parser.add_argument("--image-tar", default=os.environ.get("IMAGE_TAR_PATH"), help="Path to a local vllm Docker image .tar archive to load")
+    parser.add_argument("--hf-token", default=os.environ.get("HF_TOKEN"), help="Hugging Face token for gated models")
     parser.add_argument("--served-name", default=None, help="Custom served model name alias (default: from catalog)")
     
     # Deployment options
-    parser.add_argument("--port", type=int, default=8000, help="Host port for vLLM container (default: 8000)")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("VLLM_PORT", "8000")), help="Host port for vLLM container (default: 8000)")
     parser.add_argument("--container-name", default="vllm-node", help="Docker container name (default: vllm-node)")
     parser.add_argument("--export-compose", default=None, help="Export a docker-compose.node.yml file and exit")
     parser.add_argument("--dry-run", action="store_true", help="Print docker command without executing")
     parser.add_argument("--probe-only", action="store_true", help="Run hardware diagnostic and exit")
     parser.add_argument("--force-cpu", action="store_true", help="Allow running on CPU even if performance is low")
-    parser.add_argument("-y", "--non-interactive", action="store_true", help="Run in non-interactive mode (auto-accept prompts)")
+    parser.add_argument(
+        "-y", "--non-interactive",
+        action="store_true",
+        default=os.environ.get("NON_INTERACTIVE", "").lower() in ("true", "1", "yes"),
+        help="Run in non-interactive mode (auto-accept prompts)"
+    )
     
     # Registration & Gateway options
-    parser.add_argument("--gateway-url", default=None, help="Central Gateway / Registry URL (e.g. http://192.168.1.100:8200)")
-    parser.add_argument("--node-id", default=None, help="Unique node identifier (default: auto-generated hostname-uuid)")
-    parser.add_argument("--api-base", default=None, help="Reachable HTTP base URL for this node (default: auto-detected LAN IP)")
-    parser.add_argument("--auth-token", default=None, help="Bearer token for Central Gateway authentication")
+    parser.add_argument("--gateway-url", default=os.environ.get("GATEWAY_URL", "http://localhost:8200"), help="Central Gateway / Registry URL (e.g. http://192.168.1.100:8200)")
+    parser.add_argument("--node-id", default=os.environ.get("NODE_ID"), help="Unique node identifier (default: auto-generated hostname-uuid)")
+    parser.add_argument("--api-base", default=os.environ.get("NODE_API_BASE"), help="Reachable HTTP base URL for this node (default: auto-detected LAN IP)")
+    parser.add_argument("--auth-token", default=os.environ.get("AUTH_TOKEN"), help="Bearer token for Central Gateway authentication")
     parser.add_argument("--heartbeat-interval", type=int, default=15, help="Heartbeat interval in seconds (default: 15)")
 
     args = parser.parse_args()
