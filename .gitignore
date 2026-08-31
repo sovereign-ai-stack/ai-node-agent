@@ -15,6 +15,9 @@ models/
 *.bin
 *.pt
 *.onnx
+*.tar
+*.tar.gz
+*.zip
 .cache/
 huggingface/
 

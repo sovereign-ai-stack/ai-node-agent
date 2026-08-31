@@ -261,7 +261,7 @@ def main():
         return proc.returncode
 
     # Step 6: Wait for Health / Model Ready
-    host_ip = get_local_ip()
+    host_ip = get_local_ip(args.gateway_url)
     local_api_base = f"http://localhost:{args.port}"
     remote_api_base = args.api_base or f"http://{host_ip}:{args.port}"
 

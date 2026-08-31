@@ -58,15 +58,37 @@ def http_request(
         return 0, {"error": str(e)}
 
 
-def get_local_ip() -> str:
-    """Detect non-loopback local LAN IP address of this machine."""
+def get_local_ip(gateway_url: Optional[str] = None) -> str:
+    """
+    Intelligently detects the exact non-loopback IP address of this machine
+    that routes directly to the target gateway (Tailscale 100.x.y.z or Local LAN 192.168.x.x).
+    """
+    target_host = "10.255.255.255"
+    target_port = 1
+
+    if gateway_url:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(gateway_url)
+            if parsed.hostname:
+                target_host = parsed.hostname
+                target_port = parsed.port or 80
+        except Exception:
+            pass
+
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Does not actually connect to internet, only determines routing interface
-        s.connect(("10.255.255.255", 1))
+        s.connect((target_host, target_port))
         ip = s.getsockname()[0]
     except Exception:
-        ip = "127.0.0.1"
+        # Fallback to local routing check
+        try:
+            s2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s2.connect(("8.8.8.8", 80))
+            ip = s2.getsockname()[0]
+            s2.close()
+        except Exception:
+            ip = "127.0.0.1"
     finally:
         s.close()
     return ip
