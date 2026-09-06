@@ -197,10 +197,15 @@ class NodeRegistrationAgent:
 
     def _run_heartbeat(self):
         url = f"{self.gateway_url}/nodes/heartbeat"
+        vllm_health_url = f"{self.api_base}/health"
         while not self._stop_event.is_set():
+            # Actively test if local vLLM engine is alive and responsive
+            vllm_status, _ = http_request("GET", vllm_health_url, timeout=3)
+            is_healthy = (vllm_status == 200)
+
             payload = {
                 "node_id": self.node_id,
-                "status": "healthy",
+                "status": "healthy" if is_healthy else "unavailable",
                 "timestamp": time.time(),
             }
             try:

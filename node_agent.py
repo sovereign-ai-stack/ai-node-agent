@@ -6,23 +6,11 @@ local AI nodes to the centralized gateway.
 
 Features:
   1. Hardware Diagnostic (VRAM, CUDA, Cores, RAM).
-  2. Local-First Docker Image Discovery (Inspects Docker daemon, searches .tar archives).
-  3. Local-First Model Weight Discovery (Scans ./models, D:/models, HF Cache before downloading).
-  4. Interactive confirmation & fallback to online downloads.
-  5. Dynamic Central Gateway Auto-Registration and Heartbeat.
-
-Usage Examples:
-  # 1. Smart Interactive Boot:
-  python node_agent.py --gateway-url http://localhost:8200
-
-  # 2. Fully non-interactive / unattended mode:
-  python node_agent.py --gateway-url http://localhost:8200 --non-interactive
-
-  # 3. Direct local model & local tar:
-  python node_agent.py --gateway-url http://localhost:8200 --local-model-path D:/models/qwen7b --image-tar D:/vllm.tar
-
-  # 4. Diagnostic only:
-  python node_agent.py --probe-only
+  2. Benchmark-Driven Top 3 Model Recommendations tailored to GPU VRAM.
+  3. Local-First Docker Image Discovery (Inspects Docker daemon, searches .tar archives).
+  4. Local-First Model Weight Discovery (Scans ./models, D:/models, HF Cache before downloading).
+  5. Interactive Selection with 10s auto-fallback to #1 (Golden Choice).
+  6. Dynamic Central Gateway Auto-Registration and Heartbeat.
 """
 
 import argparse
@@ -71,7 +59,6 @@ def prompt_user(question: str, default: str = "y") -> bool:
 
 def load_dotenv_file(filepath: str = ".env"):
     """Reads key=value pairs from .env and injects into os.environ if not already set."""
-    # Check current directory and script directory
     paths = [filepath, os.path.join(os.path.dirname(os.path.abspath(__file__)), filepath)]
     for p in paths:
         if os.path.exists(p):
@@ -95,11 +82,11 @@ def main():
     load_dotenv_file(".env")
 
     parser = argparse.ArgumentParser(
-        description="Smart Node Agent: Hardware Probe, Local-First vLLM Deployer, and Central Auto-Registration"
+        description="Smart Node Agent: Hardware Probe, Benchmark Recommender, and Central Auto-Registration"
     )
     # Hardware & Model options
     parser.add_argument("--catalog", default=CATALOG_DEFAULT_PATH, help="Path to model catalog JSON")
-    parser.add_argument("--tier", default=None, help="Force a specific tier ID (e.g. tier-8gb-vram)")
+    parser.add_argument("--tier", default=None, help="Force a specific tier ID (e.g. tier-4gb-vram)")
     parser.add_argument("--local-model-path", default=os.environ.get("LOCAL_MODEL_PATH"), help="Local directory containing model weights (air-gapped)")
     parser.add_argument("--image-tar", default=os.environ.get("IMAGE_TAR_PATH"), help="Path to a local vllm Docker image .tar archive to load")
     parser.add_argument("--hf-token", default=os.environ.get("HF_TOKEN"), help="Hugging Face token for gated models")
@@ -108,7 +95,6 @@ def main():
     # Deployment options
     parser.add_argument("--port", type=int, default=int(os.environ.get("VLLM_PORT", "8000")), help="Host port for vLLM container (default: 8000)")
     parser.add_argument("--container-name", default="vllm-node", help="Docker container name (default: vllm-node)")
-    parser.add_argument("--export-compose", default=None, help="Export a docker-compose.node.yml file and exit")
     parser.add_argument("--dry-run", action="store_true", help="Print docker command without executing")
     parser.add_argument("--probe-only", action="store_true", help="Run hardware diagnostic and exit")
     parser.add_argument("--force-cpu", action="store_true", help="Allow running on CPU even if performance is low")
@@ -116,7 +102,7 @@ def main():
         "-y", "--non-interactive",
         action="store_true",
         default=os.environ.get("NON_INTERACTIVE", "").lower() in ("true", "1", "yes"),
-        help="Run in non-interactive mode (auto-accept prompts)"
+        help="Run in non-interactive mode (auto-accept recommended model #1)"
     )
     
     # Registration & Gateway options
@@ -136,33 +122,39 @@ def main():
     if args.probe_only:
         return 0
 
-    # Step 2: Select Model Tier & Calculate Tensor Parallelism
+    # Step 2: Autonomous Benchmark-Driven Model Recommendations
     manager = VLLMManager(args.catalog)
     tier, tp_size = manager.select_tier(report, forced_tier_id=args.tier)
+    recommendations = manager.get_top_model_recommendations(tier)
 
-    print("\n🎯 Phase 2: Autonomous Model & Optimization Selection")
-    print(f"  • Selected Tier       : {tier['name']} ({tier['id']})")
-    print(f"  • Recommended Model   : {tier['recommended_model']}")
-    print(f"  • Quantization Engine : {tier.get('quantization') or 'None (Standard Precision)'}")
-    print(f"  • Context Length      : {tier['max_model_len']} tokens")
-    print(f"  • Tensor Parallel Size: {tp_size} GPU(s)")
-    print(f"  • Memory Utilization  : {int(tier['gpu_memory_utilization'] * 100)}% of VRAM")
+    print("\n🎯 Phase 2: Autonomous Benchmark-Based Model Selection")
+    print(f"  • Matched Hardware Tier : {tier['name']}")
+    print(f"  • Total Usable VRAM     : {report.total_vram_gb} GB")
+    print("\n  🏆 Top 3 Recommended Models Tailored for Your Hardware:")
+    print("  " + "-" * 68)
 
-    # If export docker compose requested
-    if args.export_compose:
-        compose_str = manager.generate_docker_compose_yaml(
-            tier=tier,
-            tp_size=tp_size,
-            port=args.port,
-            container_name=args.container_name,
-            local_model_path=args.local_model_path,
-            hf_token=args.hf_token,
-            custom_served_name=args.served_name,
-        )
-        with open(args.export_compose, "w", encoding="utf-8") as f:
-            f.write(compose_str)
-        print(f"\n✅ Standalone Docker Compose exported to: {os.path.abspath(args.export_compose)}")
-        return 0
+    for idx, m in enumerate(recommendations[:3], 1):
+        local_badge = f"✅ Local Disk ({m['local_path']})" if m.get("is_local") else "🌐 Will download from Hugging Face"
+        print(f"  [{idx}] {m['model_id']}")
+        print(f"      ⭐ Role / Category : {m.get('category_label', m.get('category', 'general'))}")
+        print(f"      📊 Benchmark Score : {m.get('benchmark_score', 'High')}")
+        print(f"      💾 Local Status    : {local_badge}")
+        print(f"      ⚡ Context & Spec  : {m.get('max_model_len', 8192)} Tokens | {m.get('dtype', 'float16')} | {m.get('description', '')}")
+        print("  " + "-" * 68)
+
+    selected_model = recommendations[0]
+    if not args.non_interactive and len(recommendations) > 1:
+        try:
+            choice = input(f"\n  👉 Select model [1-{min(3, len(recommendations))}] (Default: 1 - Recommended): ").strip()
+            if choice and choice.isdigit() and 1 <= int(choice) <= len(recommendations):
+                selected_model = recommendations[int(choice) - 1]
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            return 0
+
+    print(f"\n  ✨ Chosen Model for Deployment: {selected_model['model_id']}")
+    print(f"     Served Name : {selected_model.get('served_model_name')}")
+    print(f"     Roles       : {selected_model.get('supported_roles', ['general-model'])}")
 
     # Step 3: Check and Auto-Start Docker Engine if stopped
     docker_ready = ensure_docker_running(timeout_sec=60)
@@ -170,7 +162,7 @@ def main():
         print("\n❌ Error: Docker daemon is not accessible. Please start Docker manually.")
         return 1
 
-    if tier.get("requires_gpu", True) and not report.nvidia_runtime_available:
+    if tier.get("min_vram_gb", 0) > 0 and not report.nvidia_runtime_available:
         print("\n❌ Error: NVIDIA Container Toolkit is missing.")
         print("   vLLM requires the NVIDIA container runtime to access GPUs.")
         print("   Install guide: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html")
@@ -180,7 +172,7 @@ def main():
     # ----------------------------------------------------------------------
     # Step 4: Smart Local Resource Discovery (Docker Image & Model Weights)
     # ----------------------------------------------------------------------
-    print("\n🔍 Phase 3: Checking Local Resources (Offline-First)")
+    print("\n🔍 Phase 3: Checking Local Storage & Model Files (Offline-First)")
     vllm_image = manager.catalog.get("default_vllm_image", "vllm/vllm-openai:latest")
 
     # 4.1 Check Docker Image locally
@@ -189,12 +181,9 @@ def main():
         print(f"  ✅ vLLM Docker image found in local Docker: {vllm_image}")
     else:
         print(f"  ⚠️ vLLM Docker image '{vllm_image}' is NOT present in local Docker.")
-        
-        # Check if user passed an explicit .tar file
         if args.image_tar and os.path.exists(args.image_tar):
             manager.load_docker_tar_image(args.image_tar)
         else:
-            # Auto-search nearby directories for .tar files
             local_tars = manager.find_local_tar_archives()
             if local_tars:
                 print(f"  💡 Found local image archive(s) on disk:")
@@ -204,7 +193,6 @@ def main():
                     manager.load_docker_tar_image(local_tars[0])
             else:
                 if not args.non_interactive:
-                    print("  💡 If you have a saved 'vllm-image.tar' file, you can load it now.")
                     user_tar = input("  👉 Enter path to .tar image file (or press Enter to pull from Docker Hub): ").strip()
                     if user_tar and os.path.exists(user_tar):
                         manager.load_docker_tar_image(user_tar)
@@ -212,29 +200,16 @@ def main():
                         print("  🌐 Proceeding with online Docker Hub pull...")
 
     # 4.2 Check Model Weights locally
-    resolved_model_path = args.local_model_path
+    resolved_model_path = args.local_model_path or selected_model.get("local_path")
     if resolved_model_path and os.path.exists(resolved_model_path):
-        print(f"  ✅ Using specified local model directory: {os.path.abspath(resolved_model_path)}")
+        print(f"  ✅ Found and using local model weights: {os.path.abspath(resolved_model_path)}")
     else:
-        # Auto-search on disk for the recommended model
-        detected_model_dir = manager.find_local_model_weights(tier["recommended_model"])
-        if detected_model_dir:
-            print(f"  ✅ Found local model weights for '{tier['recommended_model']}':")
-            print(f"     📁 Path: {detected_model_dir}")
-            resolved_model_path = detected_model_dir
-        else:
-            print(f"  ⚠️ Model weights for '{tier['recommended_model']}' not found in local cache.")
-            if not args.non_interactive:
-                user_mpath = input(f"  👉 Enter local path to model weights (or press Enter to auto-download from Hugging Face): ").strip()
-                if user_mpath and os.path.exists(user_mpath):
-                    resolved_model_path = user_mpath
-                    print(f"  ✅ Using local model directory: {os.path.abspath(resolved_model_path)}")
-                else:
-                    print(f"  🌐 Will auto-download '{tier['recommended_model']}' from Hugging Face into cache.")
+        print(f"  🌐 Model weights for '{selected_model['model_id']}' will be loaded/downloaded into HF cache.")
 
     # Step 5: Build and Launch Docker Container
     docker_cmd = manager.build_docker_command(
         tier=tier,
+        selected_model=selected_model,
         tp_size=tp_size,
         port=args.port,
         container_name=args.container_name,
@@ -278,20 +253,21 @@ def main():
     if args.gateway_url:
         print(f"\n🌐 Phase 6: Autonomous Registration with Central Gateway ({args.gateway_url})")
         node_id = args.node_id or f"node-{os.uname().nodename if hasattr(os, 'uname') else 'host'}-{uuid.uuid4().hex[:6]}"
-        served_name = args.served_name or tier["served_model_name"]
+        served_name = args.served_name or selected_model.get("served_model_name", "model")
 
         agent = NodeRegistrationAgent(
             node_id=node_id,
             gateway_url=args.gateway_url,
             api_base=remote_api_base,
-            model_name=tier["recommended_model"],
+            model_name=selected_model["model_id"],
             served_model_name=served_name,
-            supported_roles=tier.get("supported_roles", []),
+            supported_roles=selected_model.get("supported_roles", ["general-model"]),
             hardware_meta={
                 "gpus": [asdict(g) for g in report.gpus],
                 "total_vram_gb": report.total_vram_gb,
                 "tensor_parallel_size": tp_size,
                 "tier_id": tier["id"],
+                "benchmark_score": selected_model.get("benchmark_score", "N/A"),
             },
             heartbeat_interval=args.heartbeat_interval,
             auth_token=args.auth_token,
@@ -313,9 +289,10 @@ def main():
             signal.signal(signal.SIGTERM, handle_exit)
 
             print("\n" + "=" * 70)
-            print("  🎉 NODE RUNNING & FULLY REGISTERED!")
+            print("  🎉 NODE RUNNING & FULLY REGISTERED TO SOVEREIGN CLUSTER!")
             print(f"  • Node ID        : {node_id}")
-            print(f"  • Model Served   : {served_name}")
+            print(f"  • Model Served   : {served_name} ({selected_model['model_id']})")
+            print(f"  • Roles Assigned : {', '.join(selected_model.get('supported_roles', []))}")
             print(f"  • Endpoint       : {remote_api_base}/v1")
             print(f"  • Heartbeat Rate : Every {args.heartbeat_interval}s")
             print("  Press Ctrl+C to stop node and deregister.")
