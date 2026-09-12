@@ -21,6 +21,7 @@ import sys
 import time
 import uuid
 from dataclasses import asdict
+from typing import Any, Dict, List, Optional
 
 # Ensure UTF-8 output encoding across Windows/Linux terminals
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -78,6 +79,159 @@ def load_dotenv_file(filepath: str = ".env"):
                 pass
 
 
+def get_single_keypress() -> Optional[str]:
+    """Reads a single keypress cross-platform (Windows / Linux) supporting arrow keys."""
+    # Windows
+    if os.name == "nt":
+        import msvcrt
+        try:
+            ch = msvcrt.getch()
+            if ch in (b"\x00", b"\xe0"):
+                ch2 = msvcrt.getch()
+                if ch2 == b"H":
+                    return "up"
+                elif ch2 == b"P":
+                    return "down"
+                elif ch2 == b"K":
+                    return "left"
+                elif ch2 == b"M":
+                    return "right"
+            elif ch in (b"\r", b"\n"):
+                return "enter"
+            elif ch == b"\x1b":
+                return "esc"
+            elif ch == b"\x03":
+                return "ctrl_c"
+            return ch.decode("utf-8", errors="ignore").lower()
+        except Exception:
+            return None
+    # Linux / macOS
+    else:
+        import select
+        import termios
+        import tty
+        try:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+                if ch == "\x1b":
+                    r, _, _ = select.select([sys.stdin], [], [], 0.05)
+                    if r:
+                        ch2 = sys.stdin.read(2)
+                        if ch2 == "[A":
+                            return "up"
+                        elif ch2 == "[B":
+                            return "down"
+                    return "esc"
+                elif ch in ("\r", "\n"):
+                    return "enter"
+                elif ch == "\x03":
+                    return "ctrl_c"
+                return ch.lower()
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        except Exception:
+            return None
+
+
+def interactive_arrow_catalog_browser(models: List[Dict[str, Any]], initial_idx: int = 0) -> Dict[str, Any]:
+    """
+    Interactive full catalog browser allowing the user to navigate UP / DOWN
+    through all available models and press ENTER to deploy.
+    """
+    idx = initial_idx
+    total = len(models)
+    
+    print("\n" + "=" * 76)
+    print("  📋 INTERACTIVE MODEL CATALOG BROWSER")
+    print("  Use [↑ / Up Arrow] and [↓ / Down Arrow] to navigate, [Enter] to choose.")
+    print("=" * 76)
+
+    while True:
+        # Render current window / list
+        os.system("cls" if os.name == "nt" else "clear")
+        print("\n" + "=" * 76)
+        print("  📋 INTERACTIVE MODEL CATALOG BROWSER")
+        print(f"  Navigating {total} models. Use [↑ / ↓] to scroll, [Enter] to select, [Q / Esc] to cancel.")
+        print("=" * 76 + "\n")
+
+        # Show a window of models around current index
+        window_size = 7
+        start = max(0, min(idx - window_size // 2, total - window_size))
+        end = min(total, start + window_size)
+
+        for i in range(start, end):
+            m = models[i]
+            pointer = " 👉 \033[1;32m[*]\033[0m" if i == idx else "    [ ]"
+            local_tag = "\033[1;36m[Local Disk]\033[0m" if m.get("is_local") else "[HuggingFace]"
+            min_vram = f"{m.get('min_vram_gb', 0.0):.1f}GB VRAM"
+            category = m.get("category_label", m.get("category", "General"))
+            
+            if i == idx:
+                print(f"{pointer} \033[1;37m{m['model_id']}\033[0m  {local_tag} ({min_vram})")
+                print(f"       ⭐ Role    : {category}")
+                print(f"       📊 Metric  : {m.get('benchmark_score', 'High')}")
+                print(f"       ⚡ Spec    : {m.get('max_model_len', 4096)} ctx | {m.get('dtype', 'float16')} | {m.get('description', '')[:70]}")
+                print("       " + "-" * 68)
+            else:
+                print(f"{pointer} {m['model_id']}  {local_tag} ({min_vram}) - {m.get('category', 'general')}")
+
+        print(f"\n  [Item {idx + 1} of {total}] — Press [Enter] to Deploy, [↑ / ↓] to Move")
+
+        key = get_single_keypress()
+        if key == "up":
+            idx = (idx - 1) % total
+        elif key == "down":
+            idx = (idx + 1) % total
+        elif key == "enter":
+            return models[idx]
+        elif key in ("esc", "q", "ctrl_c"):
+            print("\nExiting browser mode...")
+            return models[idx]
+
+
+def select_model_interactive(
+    top_3: List[Dict[str, Any]],
+    all_models: List[Dict[str, Any]],
+    non_interactive: bool = False,
+) -> Dict[str, Any]:
+    """Displays Top 3 Role-Based models and offers interactive selection or full catalog browsing."""
+    print("\n  🏆 Top Recommended Models for Your Hardware (Best-in-Class by Role):")
+    print("  " + "=" * 72)
+
+    for idx, m in enumerate(top_3[:3], 1):
+        local_badge = f"✅ Local Disk ({m['local_path']})" if m.get("is_local") else "🌐 Ready to download from Hugging Face"
+        role_title = m.get("category_label", m.get("category", "general"))
+        print(f"  [{idx}] \033[1;33m{m['model_id']}\033[0m")
+        print(f"      ⭐ Role / Domain   : {role_title}")
+        print(f"      📊 Benchmark Score : {m.get('benchmark_score', 'Standard')}")
+        print(f"      💾 Local Status    : {local_badge}")
+        print(f"      ⚡ Specifications  : {m.get('max_model_len', 8192)} Tokens ctx | {m.get('dtype', 'float16')} | {m.get('description', '')}")
+        print("  " + "-" * 72)
+
+    if non_interactive or not sys.stdin.isatty():
+        return top_3[0]
+
+    print("\n  👉 Options:")
+    print("     [1-3] Choose from Top 3 Best-in-Class above")
+    print("     [B]   Browse ALL available models interactively (Up/Down Arrow Keys)")
+    print("     [Enter] Deploy #1 (Recommended Default)")
+    
+    try:
+        user_input = input("\n  Your choice [1-3, B, Enter]: ").strip().lower()
+        if user_input in ("1", "2", "3"):
+            return top_3[int(user_input) - 1]
+        elif user_input in ("b", "browse", "all", "a"):
+            return interactive_arrow_catalog_browser(all_models, initial_idx=0)
+        else:
+            return top_3[0]
+    except (KeyboardInterrupt, EOFError):
+        print("\nUsing default #1.")
+        return top_3[0]
+
+
 def main():
     load_dotenv_file(".env")
 
@@ -126,31 +280,17 @@ def main():
     manager = VLLMManager(args.catalog)
     tier, tp_size = manager.select_tier(report, forced_tier_id=args.tier)
     recommendations = manager.get_top_model_recommendations(tier)
+    all_models = manager.get_all_catalog_models()
 
-    print("\n🎯 Phase 2: Autonomous Benchmark-Based Model Selection")
+    print("\n🎯 Phase 2: Autonomous Role-Based Model Selection")
     print(f"  • Matched Hardware Tier : {tier['name']}")
     print(f"  • Total Usable VRAM     : {report.total_vram_gb} GB")
-    print("\n  🏆 Top 3 Recommended Models Tailored for Your Hardware:")
-    print("  " + "-" * 68)
 
-    for idx, m in enumerate(recommendations[:3], 1):
-        local_badge = f"✅ Local Disk ({m['local_path']})" if m.get("is_local") else "🌐 Will download from Hugging Face"
-        print(f"  [{idx}] {m['model_id']}")
-        print(f"      ⭐ Role / Category : {m.get('category_label', m.get('category', 'general'))}")
-        print(f"      📊 Benchmark Score : {m.get('benchmark_score', 'High')}")
-        print(f"      💾 Local Status    : {local_badge}")
-        print(f"      ⚡ Context & Spec  : {m.get('max_model_len', 8192)} Tokens | {m.get('dtype', 'float16')} | {m.get('description', '')}")
-        print("  " + "-" * 68)
-
-    selected_model = recommendations[0]
-    if not args.non_interactive and len(recommendations) > 1:
-        try:
-            choice = input(f"\n  👉 Select model [1-{min(3, len(recommendations))}] (Default: 1 - Recommended): ").strip()
-            if choice and choice.isdigit() and 1 <= int(choice) <= len(recommendations):
-                selected_model = recommendations[int(choice) - 1]
-        except (KeyboardInterrupt, EOFError):
-            print("\nAborted.")
-            return 0
+    selected_model = select_model_interactive(
+        top_3=recommendations,
+        all_models=all_models,
+        non_interactive=args.non_interactive,
+    )
 
     print(f"\n  ✨ Chosen Model for Deployment: {selected_model['model_id']}")
     print(f"     Served Name : {selected_model.get('served_model_name')}")

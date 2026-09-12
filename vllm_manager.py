@@ -63,34 +63,49 @@ class VLLMManager:
         tp = self._calculate_tp(report, selected_tier)
         return selected_tier, tp
 
+    def get_all_catalog_models(
+        self,
+        custom_search_dirs: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Extracts and enriches all models across all tiers in the catalog."""
+        all_models = []
+        seen_ids = set()
+        for t in self.catalog.get("tiers", []):
+            tier_name = t.get("name", "Standard")
+            tier_min_vram = t.get("min_vram_gb", 0.0)
+            for m in t.get("recommended_models", []):
+                mid = m["model_id"]
+                if mid in seen_ids:
+                    continue
+                seen_ids.add(mid)
+                m_copy = dict(m)
+                m_copy["tier_id"] = t.get("id")
+                m_copy["tier_name"] = tier_name
+                m_copy["min_vram_gb"] = tier_min_vram
+                local_path = self.find_local_model_weights(
+                    mid,
+                    aliases=m.get("local_names", []),
+                    search_dirs=custom_search_dirs,
+                )
+                m_copy["local_path"] = local_path
+                m_copy["is_local"] = bool(local_path)
+                all_models.append(m_copy)
+        return all_models
+
     def get_top_model_recommendations(
         self,
         tier: Dict[str, Any],
         custom_search_dirs: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Extracts and enriches top recommended models for the chosen tier.
-        Checks if each model is already available locally on disk.
+        Extracts, enriches, and selects the Best-in-Class model for each core role:
+          1. Best General & Knowledge Base (RAG) model (Evaluated by MMLU / MT-Bench)
+          2. Best Deep Reasoning & Logic model (Evaluated by MATH / CoT)
+          3. Best Coding & Software Engineering model (Evaluated by HumanEval / EvalPlus)
         """
         models = tier.get("recommended_models", [])
         if not models:
-            # Fallback legacy catalog structure
-            return [{
-                "model_id": tier.get("recommended_model", "Qwen/Qwen2.5-3B-Instruct"),
-                "local_names": [tier.get("served_model_name", "qwen-3b")],
-                "served_model_name": tier.get("served_model_name", "qwen-3b"),
-                "category": "general",
-                "category_label": "مدل پیش‌فرض عمومی و پایگاه دانش",
-                "benchmark_score": "Standard",
-                "supported_roles": tier.get("supported_roles", ["general-model"]),
-                "dtype": tier.get("dtype", "float16"),
-                "quantization": tier.get("quantization"),
-                "max_model_len": tier.get("max_model_len", 8192),
-                "max_num_seqs": tier.get("max_num_seqs", 24),
-                "gpu_memory_utilization": tier.get("gpu_memory_utilization", 0.90),
-                "description": tier.get("description", ""),
-                "local_path": self.find_local_model_weights(tier.get("recommended_model", ""), search_dirs=custom_search_dirs),
-            }]
+            return self.get_all_catalog_models(custom_search_dirs)[:3]
 
         enriched = []
         for m in models:
@@ -102,9 +117,65 @@ class VLLMManager:
             )
             m_copy["local_path"] = local_path
             m_copy["is_local"] = bool(local_path)
+            
+            # Extract numerical benchmark value within its domain
+            bench_val = m.get("benchmark_value")
+            if bench_val is None:
+                import re
+                score_str = str(m.get("benchmark_score", ""))
+                match = re.search(r"(\d+(\.\d+)?)", score_str)
+                bench_val = float(match.group(1)) if match else 50.0
+            m_copy["benchmark_value"] = float(bench_val)
             enriched.append(m_copy)
 
-        return enriched
+        # Categorize models by domain role
+        generals = [m for m in enriched if m.get("category") == "general" or "general-model" in m.get("supported_roles", [])]
+        reasonings = [m for m in enriched if m.get("category") == "reasoning" or "reasoning-model" in m.get("supported_roles", [])]
+        codings = [m for m in enriched if m.get("category") == "coding" or "coding-model" in m.get("supported_roles", [])]
+
+        # Sort each domain by its specific benchmark score
+        generals.sort(key=lambda x: (1 if x.get("is_local") else 0, x.get("benchmark_value", 0)), reverse=True)
+        reasonings.sort(key=lambda x: (1 if x.get("is_local") else 0, x.get("benchmark_value", 0)), reverse=True)
+        codings.sort(key=lambda x: (1 if x.get("is_local") else 0, x.get("benchmark_value", 0)), reverse=True)
+
+        top_3: List[Dict[str, Any]] = []
+        used_ids = set()
+
+        # Pick #1 Best General
+        if generals:
+            best_gen = generals[0]
+            top_3.append(best_gen)
+            used_ids.add(best_gen["model_id"])
+
+        # Pick #2 Best Reasoning
+        for r in reasonings:
+            if r["model_id"] not in used_ids:
+                top_3.append(r)
+                used_ids.add(r["model_id"])
+                break
+
+        # Pick #3 Best Coding
+        for c in codings:
+            if c["model_id"] not in used_ids:
+                top_3.append(c)
+                used_ids.add(c["model_id"])
+                break
+
+        # Fill up to 3 if any category was absent
+        for m in enriched:
+            if len(top_3) >= 3:
+                break
+            if m["model_id"] not in used_ids:
+                top_3.append(m)
+                used_ids.add(m["model_id"])
+
+        # Also attach the remaining models in the tier for complete access
+        for m in enriched:
+            if m["model_id"] not in used_ids:
+                top_3.append(m)
+                used_ids.add(m["model_id"])
+
+        return top_3
 
     def _calculate_tp(self, report: SystemHardwareReport, tier: Dict[str, Any]) -> int:
         """Determines the Tensor Parallel size based on GPU count and tier requirements."""
