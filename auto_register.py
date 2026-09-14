@@ -58,11 +58,117 @@ def http_request(
         return 0, {"error": str(e)}
 
 
+def find_tailscale_binary() -> Optional[str]:
+    """Locates the Tailscale binary cross-platform."""
+    import shutil
+    import os
+
+    candidates = ["tailscale"]
+    if os.name == "nt":
+        candidates.extend([
+            r"C:\Program Files\Tailscale\tailscale.exe",
+            r"C:\Program Files (x86)\Tailscale\tailscale.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tailscale\tailscale.exe"),
+        ])
+    else:
+        candidates.extend([
+            "/usr/bin/tailscale",
+            "/usr/local/bin/tailscale",
+            "/opt/tailscale/tailscale",
+        ])
+
+    for c in candidates:
+        if os.path.isabs(c) and os.path.exists(c):
+            return c
+        elif shutil.which(c):
+            return shutil.which(c)
+    return None
+
+
+def get_tailscale_ip() -> Optional[str]:
+    """Finds Tailscale IPv4 address (100.x.y.z) if Tailscale is running."""
+    import subprocess
+    ts_bin = find_tailscale_binary()
+    if not ts_bin:
+        return None
+
+    try:
+        res = subprocess.run([ts_bin, "ip", "-4"], capture_output=True, text=True, timeout=5)
+        if res.returncode == 0 and res.stdout.strip():
+            for line in res.stdout.strip().splitlines():
+                ip = line.strip()
+                if ip.startswith("100."):
+                    return ip
+    except Exception:
+        pass
+    return None
+
+
+def ensure_tailscale(authkey: Optional[str] = None) -> Optional[str]:
+    """
+    Ensures Tailscale is installed, up, and connected.
+    If authkey is provided and node is offline, brings up Tailscale automatically.
+    Returns the Tailscale IPv4 address, or None if unavailable.
+    """
+    import subprocess
+    import shutil
+    import os
+
+    ts_bin = find_tailscale_binary()
+
+    # If missing on Windows and we have an authkey, attempt winget install
+    if not ts_bin and authkey and os.name == "nt":
+        winget = shutil.which("winget")
+        if winget:
+            logger.info("Tailscale binary not found. Attempting automated winget install...")
+            try:
+                subprocess.run(
+                    [winget, "install", "-e", "--id", "Tailscale.Tailscale", "--accept-package-agreements", "--accept-source-agreements"],
+                    check=False,
+                    timeout=120,
+                )
+                ts_bin = find_tailscale_binary()
+            except Exception as e:
+                logger.warning(f"Winget install of Tailscale encountered an issue: {e}")
+
+    if not ts_bin:
+        return None
+
+    # Check status
+    is_connected = False
+    try:
+        status_res = subprocess.run([ts_bin, "status"], capture_output=True, text=True, timeout=8)
+        if status_res.returncode == 0:
+            is_connected = True
+    except Exception:
+        pass
+
+    # If not connected and we have an authkey, connect
+    if not is_connected and authkey:
+        logger.info("🔑 Connecting to Tailscale Mesh Network using AuthKey...")
+        try:
+            up_cmd = [ts_bin, "up", "--authkey", authkey, "--unattended"]
+            subprocess.run(up_cmd, check=False, timeout=30)
+        except Exception as e:
+            logger.warning(f"Failed to execute tailscale up: {e}")
+
+    ip = get_tailscale_ip()
+    if ip:
+        logger.info(f"🔒 Active Tailscale Mesh IP: {ip}")
+    return ip
+
+
 def get_local_ip(gateway_url: Optional[str] = None) -> str:
     """
-    Intelligently detects the exact non-loopback IP address of this machine
-    that routes directly to the target gateway (Tailscale 100.x.y.z or Local LAN 192.168.x.x).
+    Intelligently detects the exact non-loopback IP address of this machine.
+    Prioritizes Tailscale IP (100.x.y.z) when connecting to remote/mesh clusters,
+    or falls back to LAN IP.
     """
+    # 1. Check if Tailscale is active
+    ts_ip = get_tailscale_ip()
+    if ts_ip:
+        return ts_ip
+
     target_host = "10.255.255.255"
     target_port = 1
 
@@ -94,8 +200,46 @@ def get_local_ip(gateway_url: Optional[str] = None) -> str:
     return ip
 
 
-def wait_for_vllm_ready(api_base: str, timeout_sec: int = 300, interval_sec: int = 5) -> bool:
-    """Polls vLLM health endpoint until model weights are loaded and ready."""
+def check_container_health(container_name: str) -> Tuple[bool, Optional[str]]:
+    """Checks if the container is crashing or encountered fatal OOM/startup errors."""
+    try:
+        import subprocess
+        res = subprocess.run(
+            ["docker", "inspect", "--format", "{{.State.Status}}||{{.State.ExitCode}}||{{.RestartCount}}", container_name],
+            capture_output=True, text=True, timeout=5, check=False
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            parts = res.stdout.strip().split("||")
+            status = parts[0]
+            exit_code = parts[1] if len(parts) > 1 else "0"
+            restarts = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
+
+            # If container exited with error or is constantly restarting:
+            if (status == "exited" and exit_code != "0") or restarts >= 1:
+                log_res = subprocess.run(["docker", "logs", "--tail", "30", container_name], capture_output=True, text=True)
+                combined = log_res.stdout + "\n" + log_res.stderr
+                if "Free memory on device" in combined or "OutOfMemoryError" in combined or "CUDA out of memory" in combined:
+                    return False, "OOM: GPU VRAM is insufficient for this model configuration (KV cache / weights overflow)."
+                elif "UVA is not available" in combined:
+                    return False, "UVA_ERROR: WSL2 Unified Virtual Addressing unsupported."
+                elif "Invalid repository ID" in combined or "config.json" in combined:
+                    return False, "CONFIG_ERROR: Model directory missing config.json or invalid path."
+                elif status == "exited":
+                    return False, f"CRASH: Container exited with code {exit_code}."
+                elif restarts >= 2:
+                    return False, f"CRASH_LOOP: Container restarted {restarts} times due to errors."
+    except Exception:
+        pass
+    return True, None
+
+
+def wait_for_vllm_ready(
+    api_base: str,
+    container_name: Optional[str] = None,
+    timeout_sec: int = 180,
+    interval_sec: int = 5,
+) -> Tuple[bool, Optional[str]]:
+    """Polls vLLM health endpoint until model weights are loaded and ready, monitoring container health."""
     clean_base = api_base.rstrip("/")
     health_url = f"{clean_base}/health"
     models_url = f"{clean_base}/v1/models"
@@ -104,6 +248,14 @@ def wait_for_vllm_ready(api_base: str, timeout_sec: int = 300, interval_sec: int
     deadline = time.time() + timeout_sec
     
     while time.time() < deadline:
+        # 1. Proactively check if container died or is in crash loop
+        if container_name:
+            healthy, err_msg = check_container_health(container_name)
+            if not healthy and err_msg:
+                logger.error(f"❌ Container failure detected early: {err_msg}")
+                return False, err_msg
+
+        # 2. Check HTTP health
         status, data = http_request("GET", health_url, timeout=5)
         if status == 200:
             # Also check if /v1/models returns loaded models
@@ -111,12 +263,12 @@ def wait_for_vllm_ready(api_base: str, timeout_sec: int = 300, interval_sec: int
             if m_status == 200 and m_data.get("data"):
                 loaded = [m.get("id") for m in m_data.get("data", [])]
                 logger.info(f"✅ vLLM is healthy and serving models: {loaded}")
-                return True
+                return True, None
         logger.info(f"⏳ Waiting for vLLM to finish loading model weights... (retrying in {interval_sec}s)")
         time.sleep(interval_sec)
     
     logger.error("❌ Timeout: vLLM did not become healthy within the allowed window.")
-    return False
+    return False, "TIMEOUT"
 
 
 class NodeRegistrationAgent:

@@ -298,6 +298,21 @@ class VLLMManager:
         except Exception:
             return False
 
+    @staticmethod
+    def get_local_model_size_gb(directory: str) -> float:
+        """Calculates total size of model weights in GB."""
+        if not os.path.isdir(directory):
+            return 0.0
+        try:
+            total_bytes = 0
+            for root, _, files in os.walk(directory):
+                for f in files:
+                    if f.endswith((".safetensors", ".bin", ".pt", ".gguf")):
+                        total_bytes += os.path.getsize(os.path.join(root, f))
+            return round(total_bytes / (1024**3), 2)
+        except Exception:
+            return 0.0
+
     # ----------------------------------------------------------------------
     # Docker Command & Compose Generation
     # ----------------------------------------------------------------------
@@ -313,8 +328,14 @@ class VLLMManager:
         hf_token: Optional[str] = None,
         custom_served_name: Optional[str] = None,
         extra_vllm_args: Optional[List[str]] = None,
+        free_vram_gb: Optional[float] = None,
+        total_vram_gb: Optional[float] = None,
+        force_eager: bool = False,
+        override_max_len: Optional[int] = None,
+        override_gpu_util: Optional[float] = None,
+        is_cpu_mode: bool = False,
     ) -> List[str]:
-        """Constructs an optimized `docker run` command for vLLM."""
+        """Constructs an optimized `docker run` command for vLLM with low-VRAM & WSL2 auto-tuning."""
         image = self.catalog.get("default_vllm_image", "vllm/vllm-openai:latest")
         served_name = custom_served_name or selected_model.get("served_model_name") or tier.get("served_model_name", "model")
         model_to_load = local_model_path if local_model_path else selected_model["model_id"]
@@ -322,13 +343,14 @@ class VLLMManager:
         cmd = [
             "docker", "run", "-d",
             "--name", container_name,
-            "--restart", "unless-stopped",
             "-p", f"{port}:8000",
             "--shm-size", "16g",
             "--ipc=host",
+            # Mandatory for Windows Docker / WSL2 to prevent UVA (Unified Virtual Addressing) crashes
+            "-e", "VLLM_USE_V2_MODEL_RUNNER=0",
         ]
 
-        if tier.get("min_vram_gb", 0) > 0:
+        if not is_cpu_mode:
             cmd.extend(["--gpus", "all"])
 
         # Volume mounts
@@ -349,16 +371,52 @@ class VLLMManager:
         max_len = selected_model.get("max_model_len") or tier.get("max_model_len", 8192)
         max_seqs = selected_model.get("max_num_seqs") or tier.get("max_num_seqs", 24)
 
+        if not is_cpu_mode and total_vram_gb and total_vram_gb <= 6.0:
+            # Low VRAM GPU (e.g. 4GB laptop GPU):
+            # 1. Adapt gpu_memory_utilization to real free memory to avoid startup ValueError
+            avail_free = free_vram_gb if free_vram_gb else (total_vram_gb - 0.8)
+            safe_ratio = round(max(0.50, min(0.75, (avail_free - 0.25) / total_vram_gb)), 2)
+            gpu_util = override_gpu_util or min(gpu_util, safe_ratio)
+
+            # 2. Limit context window to 2048 to keep KV cache compact (~1.2GB)
+            if not override_max_len and max_len > 2048:
+                max_len = 2048
+            elif override_max_len:
+                max_len = override_max_len
+
+            # 3. Enforce eager execution to eliminate CUDA graph memory capture
+            force_eager = True
+        else:
+            if override_gpu_util:
+                gpu_util = override_gpu_util
+            if override_max_len:
+                max_len = override_max_len
+
+        # Collect all alias names so vLLM serves all roles, paths, and model names simultaneously
+        served_names = [served_name]
+        if selected_model.get("model_id") and selected_model["model_id"] not in served_names:
+            served_names.append(selected_model["model_id"])
+        for r in selected_model.get("supported_roles", []):
+            if r not in served_names:
+                served_names.append(r)
+        for loc in selected_model.get("local_names", []):
+            if loc not in served_names:
+                served_names.append(loc)
+
         vllm_args = [
             image,
             "--model", model_to_load,
-            "--served-model-name", served_name,
+            "--served-model-name",
+            *served_names,
             "--host", "0.0.0.0",
             "--port", "8000",
             "--gpu-memory-utilization", str(gpu_util),
             "--max-model-len", str(max_len),
             "--max-num-seqs", str(max_seqs),
         ]
+
+        if force_eager:
+            vllm_args.append("--enforce-eager")
 
         quant = selected_model.get("quantization") or tier.get("quantization")
         if quant:

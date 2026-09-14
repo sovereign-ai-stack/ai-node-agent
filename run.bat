@@ -29,6 +29,12 @@ if %errorlevel% neq 0 (
 )
 
 :: 3. Optional Automated Tailscale Auto-Install & Auto-Connect
+if exist "C:\Program Files\Tailscale" (
+    set "PATH=C:\Program Files\Tailscale;%PATH%"
+)
+if exist "%LOCALAPPDATA%\Programs\Tailscale" (
+    set "PATH=%LOCALAPPDATA%\Programs\Tailscale;%PATH%"
+)
 for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b "TAILSCALE_AUTHKEY=" .env 2^>nul`) do (
     set TAIL_KEY=%%B
 )
@@ -40,6 +46,9 @@ if defined TAIL_KEY if not "%TAIL_KEY%"=="" (
         if %errorlevel% neq 0 (
             echo [*] Installing Tailscale via winget...
             winget install -e --id Tailscale.Tailscale --accept-package-agreements --accept-source-agreements
+            if exist "C:\Program Files\Tailscale" (
+                set "PATH=C:\Program Files\Tailscale;%PATH%"
+            )
         )
         echo [*] Connecting Tailscale silently with AuthKey...
         tailscale up --authkey %TAIL_KEY% --unattended >nul 2>&1

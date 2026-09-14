@@ -11,12 +11,21 @@
       "recommended_models": [
         {
           "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
-          "local_names": ["Qwen2.5-1.5B-Instruct", "qwen2.5-1.5b-instruct", "qwen-1.5b", "Qwen2.5-1.5B"],
+          "local_names": [
+            "Qwen2.5-1.5B-Instruct",
+            "qwen2.5-1.5b-instruct",
+            "qwen-1.5b",
+            "Qwen2.5-1.5B"
+          ],
           "served_model_name": "qwen-1.5b",
           "category": "general",
           "category_label": "دستیار عمومی و پایگاه دانش (فارسی روان)",
           "benchmark_score": "MMLU 62.5 / Fast Multilingual",
-          "supported_roles": ["general-model", "rag-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -26,12 +35,19 @@
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-          "local_names": ["DeepSeek-R1-Distill-Qwen-1.5B", "deepseek-r1-distill-qwen-1.5b", "deepseek-r1-1.5b"],
+          "local_names": [
+            "DeepSeek-R1-Distill-Qwen-1.5B",
+            "deepseek-r1-distill-qwen-1.5b",
+            "deepseek-r1-1.5b"
+          ],
           "served_model_name": "reasoning-model",
           "category": "reasoning",
           "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think>)",
           "benchmark_score": "MATH 83.1 / CoT Reasoning",
-          "supported_roles": ["reasoning-model", "general-model"],
+          "supported_roles": [
+            "reasoning-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -41,12 +57,19 @@
         },
         {
           "model_id": "deepseek-ai/DeepSeek-Coder-1.3B-instruct",
-          "local_names": ["DeepSeek-Coder-1.3B-instruct", "deepseek-coder-1.3b-instruct", "deepseek-coder-1.3b"],
+          "local_names": [
+            "DeepSeek-Coder-1.3B-instruct",
+            "deepseek-coder-1.3b-instruct",
+            "deepseek-coder-1.3b"
+          ],
           "served_model_name": "coding-model",
           "category": "coding",
           "category_label": "توسعه، تحلیل و خطایابی کد (Coding)",
           "benchmark_score": "HumanEval 68.2 / Code Pass@1",
-          "supported_roles": ["coding-model", "general-model"],
+          "supported_roles": [
+            "coding-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -56,42 +79,62 @@
         },
         {
           "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
-          "local_names": ["Qwen2.5-Coder-0.5B-Instruct", "qwen2.5-coder-0.5b-instruct", "qwen-0.5b-coder"],
+          "local_names": [
+            "Qwen2.5-Coder-0.5B-Instruct",
+            "qwen2.5-coder-0.5b-instruct",
+            "qwen-0.5b-coder"
+          ],
           "served_model_name": "coding-model",
           "category": "coding",
           "category_label": "مدل فوق‌سبک کدنویسی (Qwen 0.5B Coder)",
           "benchmark_score": "HumanEval 52.4 / Ultra-Low VRAM",
-          "supported_roles": ["coding-model", "general-model"],
+          "supported_roles": [
+            "coding-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
           "max_num_seqs": 16,
-          "gpu_memory_utilization": 0.80,
+          "gpu_memory_utilization": 0.8,
           "description": "سبک‌ترین مدل تخصصی کدنویسی برای سیستم‌های بدون کارت گرافیک یا زیر ۲ گیگابایت حافظه."
         },
         {
           "model_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
-          "local_names": ["SmolLM2-1.7B-Instruct", "smollm2-1.7b-instruct", "smollm2-1.7b"],
+          "local_names": [
+            "SmolLM2-1.7B-Instruct",
+            "smollm2-1.7b-instruct",
+            "smollm2-1.7b"
+          ],
           "served_model_name": "smollm-1.7b",
           "category": "general",
           "category_label": "دستیار فشرده هاگینگ‌فیس (SmolLM2 1.7B)",
           "benchmark_score": "MMLU 53.5 / Compact",
-          "supported_roles": ["general-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
           "max_num_seqs": 16,
-          "gpu_memory_utilization": 0.80,
+          "gpu_memory_utilization": 0.8,
           "description": "مدل ۱.۷ میلیارد پارامتری بهینه هاگینگ‌فیس برای گفتگوهای عمومی سریع."
         },
         {
           "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-          "local_names": ["TinyLlama-1.1B-Chat-v1.0", "tinyllama-1.1b-chat-v1.0", "tinyllama-1.1b"],
+          "local_names": [
+            "TinyLlama-1.1B-Chat-v1.0",
+            "tinyllama-1.1b-chat-v1.0",
+            "tinyllama-1.1b"
+          ],
           "served_model_name": "tinyllama-1.1b",
           "category": "general",
           "category_label": "مدل تاینی‌لاما (TinyLlama 1.1B)",
           "benchmark_score": "MMLU 38.2 / Ultra-Light",
-          "supported_roles": ["general-model"],
+          "supported_roles": [
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 2048,
@@ -101,12 +144,18 @@
         },
         {
           "model_id": "Qwen/Qwen3-0.6B",
-          "local_names": ["Qwen3-0.6B", "qwen3-0.6b", "qwen-0.6b"],
+          "local_names": [
+            "Qwen3-0.6B",
+            "qwen3-0.6b",
+            "qwen-0.6b"
+          ],
           "served_model_name": "qwen-0.6b",
           "category": "general",
           "category_label": "نسل جدید فوق‌سبک کوئن (Qwen3 0.6B)",
           "benchmark_score": "MMLU 48.0 / Ultra-Fast",
-          "supported_roles": ["general-model"],
+          "supported_roles": [
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -123,28 +172,92 @@
       "max_vram_gb": 6.0,
       "recommended_models": [
         {
+          "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
+          "local_names": [
+            "Qwen2.5-3B-Instruct-AWQ",
+            "qwen2.5-3b-instruct-awq",
+            "qwen-3b-awq"
+          ],
+          "served_model_name": "qwen-3b",
+          "category": "general",
+          "category_label": "پرچمدار بهینه ۴ بیتی کوئن (Qwen 3B AWQ - انتخاب طلایی ۴ گیگ)",
+          "benchmark_score": "MMLU 68.4 / AWQ High-Speed",
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model",
+            "reasoning-model"
+          ],
+          "dtype": "float16",
+          "quantization": "awq",
+          "max_model_len": 4096,
+          "max_num_seqs": 16,
+          "gpu_memory_utilization": 0.75,
+          "description": "نسخه ۴ بیتی فشرده ۳ میلیارد پارامتری کوئن با نهایت سرعت و مصرف ۲.۵ گیگابایت VRAM."
+        },
+        {
+          "model_id": "Qwen/Qwen2.5-1.5B-Instruct-AWQ",
+          "local_names": [
+            "Qwen2.5-1.5B-Instruct-AWQ",
+            "qwen2.5-1.5b-instruct-awq",
+            "qwen-1.5b-awq"
+          ],
+          "served_model_name": "qwen-1.5b",
+          "category": "general",
+          "category_label": "دستیار سبک و فوق‌سریع ۴ بیتی (Qwen 1.5B AWQ)",
+          "benchmark_score": "MMLU 62.5 / Ultra-Fast",
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model"
+          ],
+          "dtype": "float16",
+          "quantization": "awq",
+          "max_model_len": 4096,
+          "max_num_seqs": 16,
+          "gpu_memory_utilization": 0.7,
+          "description": "فوق‌العاده سریع با حجم فقط ۱.۵ گیگابایت و بازدهی عالی برای کانتکست‌های طولانی."
+        },
+        {
           "model_id": "Qwen/Qwen2.5-3B-Instruct",
-          "local_names": ["Qwen2.5-3B-Instruct", "qwen2.5-3b-instruct", "qwen-3b", "Qwen2.5-3B"],
+          "local_names": [
+            "Qwen2.5-3B-Instruct",
+            "qwen2.5-3b-instruct",
+            "qwen-3b",
+            "Qwen2.5-3B"
+          ],
           "served_model_name": "qwen-3b",
           "category": "general",
           "category_label": "بهترین دستیار هوشمند و پایگاه دانش (General & RAG - انتخاب طلایی ۴ گیگ)",
           "benchmark_score": "MMLU 68.4 / Superior Persian QA",
-          "supported_roles": ["general-model", "rag-model", "coding-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model",
+            "reasoning-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 8192,
           "max_num_seqs": 24,
-          "gpu_memory_utilization": 0.90,
+          "gpu_memory_utilization": 0.9,
           "description": "بالاترین دقت و روانی زبان فارسی برای VRAM 4GB با پنجره زمینه ۸ هزار توکن."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-          "local_names": ["DeepSeek-R1-Distill-Qwen-1.5B", "deepseek-r1-distill-qwen-1.5b", "deepseek-r1-1.5b"],
+          "local_names": [
+            "DeepSeek-R1-Distill-Qwen-1.5B",
+            "deepseek-r1-distill-qwen-1.5b",
+            "deepseek-r1-1.5b"
+          ],
           "served_model_name": "reasoning-model",
           "category": "reasoning",
           "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think> CoT)",
           "benchmark_score": "MATH 83.1 / AIME 28.9",
-          "supported_roles": ["reasoning-model", "general-model"],
+          "supported_roles": [
+            "reasoning-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 8192,
@@ -154,12 +267,21 @@
         },
         {
           "model_id": "microsoft/Phi-3.5-mini-instruct",
-          "local_names": ["Phi-3.5-mini-instruct", "phi-3.5-mini-instruct", "phi-3.5-mini"],
+          "local_names": [
+            "Phi-3.5-mini-instruct",
+            "phi-3.5-mini-instruct",
+            "phi-3.5-mini"
+          ],
           "served_model_name": "phi-3.5-mini",
           "category": "coding",
           "category_label": "پردازش عمیق داده و استدلال فشرده (High-Density 3.8B)",
           "benchmark_score": "MMLU 69.0 / MT-Bench 8.2",
-          "supported_roles": ["general-model", "coding-model", "reasoning-model"],
+          "supported_roles": [
+            "coding-model",
+            "reasoning-model",
+            "general-model",
+            "rag-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -169,12 +291,19 @@
         },
         {
           "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
-          "local_names": ["Qwen2.5-Math-1.5B-Instruct", "qwen2.5-math-1.5b-instruct", "qwen-math-1.5b"],
+          "local_names": [
+            "Qwen2.5-Math-1.5B-Instruct",
+            "qwen2.5-math-1.5b-instruct",
+            "qwen-math-1.5b"
+          ],
           "served_model_name": "reasoning-model",
           "category": "reasoning",
           "category_label": "محاسبات و اثبات‌های تخصصی ریاضی (Qwen Math 1.5B)",
           "benchmark_score": "MATH 79.8 / GSM8K 84.8",
-          "supported_roles": ["reasoning-model", "general-model"],
+          "supported_roles": [
+            "reasoning-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -184,12 +313,20 @@
         },
         {
           "model_id": "google/gemma-2-2b-it",
-          "local_names": ["gemma-2-2b-it", "Gemma-2-2b-it", "gemma-2b"],
+          "local_names": [
+            "gemma-2-2b-it",
+            "Gemma-2-2b-it",
+            "gemma-2b"
+          ],
           "served_model_name": "gemma-2b",
           "category": "general",
           "category_label": "دستیار فشرده گوگل (Gemma-2 2.6B)",
           "benchmark_score": "MMLU 56.1 / Lightweight",
-          "supported_roles": ["general-model", "rag-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "reasoning-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
@@ -199,62 +336,90 @@
         },
         {
           "model_id": "meta-llama/Llama-3.2-1B-Instruct",
-          "local_names": ["Llama-3.2-1B-Instruct", "llama-3.2-1b-instruct", "llama-3.2-1b"],
+          "local_names": [
+            "Llama-3.2-1B-Instruct",
+            "llama-3.2-1b-instruct",
+            "llama-3.2-1b"
+          ],
           "served_model_name": "llama-1b",
           "category": "general",
           "category_label": "سبک‌ترین مدل لاما ۳.۲ (Llama 3.2 1B)",
           "benchmark_score": "MMLU 49.3 / Ultra-Fast",
-          "supported_roles": ["general-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
           "max_num_seqs": 16,
-          "gpu_memory_utilization": 0.80,
+          "gpu_memory_utilization": 0.8,
           "description": "مدل ۱ میلیارد پارامتری متا با سرعت پاسخ‌دهی بالای ۱۰۰ توکن بر ثانیه."
         },
         {
           "model_id": "BAAI/bge-m3",
-          "local_names": ["bge-m3", "BGE-M3", "bge_m3"],
+          "local_names": [
+            "bge-m3",
+            "BGE-M3",
+            "bge_m3"
+          ],
           "served_model_name": "rag-model",
           "category": "rag",
           "category_label": "مدل پرچمدار امبدینگ چندزبانه و متراکم (BGE-M3 Embeddings)",
           "benchmark_score": "MTEB 64.1 / Top Retrieval",
-          "supported_roles": ["rag-model"],
+          "supported_roles": [
+            "rag-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 8192,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.50,
+          "gpu_memory_utilization": 0.5,
           "description": "تولید بردار‌های معنایی چندزبانه برای جستجو در اسناد و بازیابی دقیق RAG."
         },
         {
           "model_id": "Qwen/Qwen3-Embedding-0.6B",
-          "local_names": ["Qwen3-Embedding-0.6B", "qwen3-embedding-0.6b", "qwen3-embed"],
+          "local_names": [
+            "Qwen3-Embedding-0.6B",
+            "qwen3-embedding-0.6b",
+            "qwen3-embed"
+          ],
           "served_model_name": "rag-model",
           "category": "rag",
           "category_label": "امبدینگ فوق‌سریع نسل ۳ کوئن (Qwen3 Embeddings 0.6B)",
           "benchmark_score": "MTEB High / Ultra-Low VRAM",
-          "supported_roles": ["rag-model"],
+          "supported_roles": [
+            "rag-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.40,
+          "gpu_memory_utilization": 0.4,
           "description": "مدل برداری بسیار کم‌مصرف برای ایندکس و تطابق سریع اسناد سازمانی."
         },
         {
           "model_id": "Qwen/Qwen3-Reranker-0.6B",
-          "local_names": ["Qwen3-Reranker-0.6B", "qwen3-reranker-0.6b", "qwen3-rerank"],
+          "local_names": [
+            "Qwen3-Reranker-0.6B",
+            "qwen3-reranker-0.6b",
+            "qwen3-rerank"
+          ],
           "served_model_name": "rag-model",
           "category": "rag",
           "category_label": "بازرتبه‌بندی دقیق اسناد RAG (Qwen3 Reranker 0.6B)",
           "benchmark_score": "Cross-Encoder Top Accuracy",
-          "supported_roles": ["rag-model"],
+          "supported_roles": [
+            "rag-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": null,
           "max_model_len": 4096,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.40,
+          "gpu_memory_utilization": 0.4,
           "description": "فیلتر و رتبه‌بندی مجدد قطعات متنی بازیابی‌شده پیش از ارسال به مدل اصلی."
         }
       ]
@@ -267,47 +432,73 @@
       "recommended_models": [
         {
           "model_id": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-          "local_names": ["Qwen2.5-7B-Instruct-AWQ", "qwen2.5-7b-instruct-awq", "qwen-7b-awq", "Qwen2.5-7B-Instruct"],
+          "local_names": [
+            "Qwen2.5-7B-Instruct-AWQ",
+            "qwen2.5-7b-instruct-awq",
+            "qwen-7b-awq",
+            "Qwen2.5-7B-Instruct"
+          ],
           "served_model_name": "qwen-7b",
           "category": "general",
           "category_label": "مدل پرچمدار استاندارد سازمانی (7B AWQ - همه‌منظوره)",
           "benchmark_score": "MMLU 74.2 / Production Standard",
-          "supported_roles": ["general-model", "rag-model", "coding-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model",
+            "reasoning-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 16384,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.90,
+          "gpu_memory_utilization": 0.9,
           "description": "استاندارد اصلی هوش مصنوعی سازمانی با کیفیت فوق‌العاده در پاسخ‌گویی به اسناد و مکالمات."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
-          "local_names": ["DeepSeek-R1-Distill-Qwen-7B", "deepseek-r1-distill-qwen-7b", "deepseek-r1-7b"],
+          "local_names": [
+            "DeepSeek-R1-Distill-Qwen-7B",
+            "deepseek-r1-distill-qwen-7b",
+            "deepseek-r1-7b"
+          ],
           "served_model_name": "reasoning-model",
           "category": "reasoning",
           "category_label": "استدلال پیشرفته ریاضی و منطقی (DeepSeek-R1 7B)",
           "benchmark_score": "MATH 92.8 / AIME 55.5",
-          "supported_roles": ["reasoning-model", "general-model"],
+          "supported_roles": [
+            "reasoning-model",
+            "general-model",
+            "coding-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 16384,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.90,
+          "gpu_memory_utilization": 0.9,
           "description": "قدرتمندترین مدل استدلال منطقی و حل مسئله در رده ۷ میلیارد پارامتر."
         },
         {
           "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct-AWQ",
-          "local_names": ["Qwen2.5-Coder-7B-Instruct-AWQ", "qwen2.5-coder-7b-instruct-awq", "qwen-7b-coder", "Qwen2.5-Coder-7B-Instruct"],
+          "local_names": [
+            "Qwen2.5-Coder-7B-Instruct-AWQ",
+            "qwen2.5-coder-7b-instruct-awq",
+            "qwen-7b-coder",
+            "Qwen2.5-Coder-7B-Instruct"
+          ],
           "served_model_name": "coding-model",
           "category": "coding",
           "category_label": "برنامه‌نویسی و معماری نرم‌افزار تخصصی (7B Coder)",
           "benchmark_score": "HumanEval 84.1 / EvalPlus 78.4",
-          "supported_roles": ["coding-model", "general-model"],
+          "supported_roles": [
+            "coding-model",
+            "general-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 16384,
           "max_num_seqs": 32,
-          "gpu_memory_utilization": 0.90,
+          "gpu_memory_utilization": 0.9,
           "description": "تولید کدهای پیشرفته در بیش از ۹۰ زبان برنامه‌نویسی و تحلیل باگ‌ها."
         }
       ]
@@ -320,12 +511,21 @@
       "recommended_models": [
         {
           "model_id": "Qwen/Qwen2.5-14B-Instruct-AWQ",
-          "local_names": ["Qwen2.5-14B-Instruct-AWQ", "qwen2.5-14b-instruct-awq", "qwen-14b"],
+          "local_names": [
+            "Qwen2.5-14B-Instruct-AWQ",
+            "qwen2.5-14b-instruct-awq",
+            "qwen-14b"
+          ],
           "served_model_name": "qwen-14b",
           "category": "general",
           "category_label": "مدل بزرگ سازمانی ۱۴ میلیارد پارامتری (14B AWQ)",
           "benchmark_score": "MMLU 79.5 / Near GPT-4o-mini",
-          "supported_roles": ["general-model", "rag-model", "coding-model", "reasoning-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model",
+            "reasoning-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 32768,
@@ -335,12 +535,20 @@
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
-          "local_names": ["DeepSeek-R1-Distill-Qwen-14B", "deepseek-r1-distill-qwen-14b", "deepseek-r1-14b"],
+          "local_names": [
+            "DeepSeek-R1-Distill-Qwen-14B",
+            "deepseek-r1-distill-qwen-14b",
+            "deepseek-r1-14b"
+          ],
           "served_model_name": "reasoning-model",
           "category": "reasoning",
           "category_label": "استدلال فوق‌سنگین و پیچیده ریاضی (14B Reasoning)",
           "benchmark_score": "MATH 93.9 / AIME 69.7",
-          "supported_roles": ["reasoning-model", "general-model"],
+          "supported_roles": [
+            "reasoning-model",
+            "general-model",
+            "coding-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 32768,
@@ -350,12 +558,21 @@
         },
         {
           "model_id": "Qwen/Qwen2.5-32B-Instruct-AWQ",
-          "local_names": ["Qwen2.5-32B-Instruct-AWQ", "qwen2.5-32b-instruct-awq", "qwen-32b"],
+          "local_names": [
+            "Qwen2.5-32B-Instruct-AWQ",
+            "qwen2.5-32b-instruct-awq",
+            "qwen-32b"
+          ],
           "served_model_name": "qwen-32b",
           "category": "general",
           "category_label": "پرچمدار ۳۲ میلیارد پارامتری فوق‌پیشرفته (32B AWQ)",
           "benchmark_score": "MMLU 83.5 / Flagship Intelligence",
-          "supported_roles": ["general-model", "rag-model", "coding-model", "reasoning-model"],
+          "supported_roles": [
+            "general-model",
+            "rag-model",
+            "coding-model",
+            "reasoning-model"
+          ],
           "dtype": "float16",
           "quantization": "awq",
           "max_model_len": 32768,

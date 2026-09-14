@@ -21,7 +21,7 @@ import sys
 import time
 import uuid
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Ensure UTF-8 output encoding across Windows/Linux terminals
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -37,7 +37,9 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
 
 from auto_register import (
     NodeRegistrationAgent,
+    ensure_tailscale,
     get_local_ip,
+    get_tailscale_ip,
     wait_for_vllm_ready,
 )
 from hardware_detector import detect_hardware, print_hardware_summary, ensure_docker_running
@@ -235,6 +237,11 @@ def select_model_interactive(
 def main():
     load_dotenv_file(".env")
 
+    # Automated Tailscale Mesh Network Discovery & Connect
+    ts_key = os.environ.get("TAILSCALE_AUTHKEY")
+    if ts_key or get_tailscale_ip():
+        ensure_tailscale(ts_key)
+
     parser = argparse.ArgumentParser(
         description="Smart Node Agent: Hardware Probe, Benchmark Recommender, and Central Auto-Registration"
     )
@@ -340,54 +347,152 @@ def main():
                         print("  🌐 Proceeding with online Docker Hub pull...")
 
     # 4.2 Check Model Weights locally
-    resolved_model_path = args.local_model_path or selected_model.get("local_path")
+    resolved_model_path = None
+    if args.local_model_path and os.path.exists(args.local_model_path):
+        if manager._is_valid_model_dir(args.local_model_path):
+            resolved_model_path = args.local_model_path
+        else:
+            # If args.local_model_path is a parent directory (e.g. D:/models) containing multiple models
+            resolved_model_path = manager.find_local_model_weights(
+                selected_model["model_id"],
+                aliases=selected_model.get("local_names", []),
+                search_dirs=[args.local_model_path],
+            )
+
+    if not resolved_model_path:
+        resolved_model_path = selected_model.get("local_path")
+
     if resolved_model_path and os.path.exists(resolved_model_path):
         print(f"  ✅ Found and using local model weights: {os.path.abspath(resolved_model_path)}")
     else:
         print(f"  🌐 Model weights for '{selected_model['model_id']}' will be loaded/downloaded into HF cache.")
 
-    # Step 5: Build and Launch Docker Container
-    docker_cmd = manager.build_docker_command(
-        tier=tier,
-        selected_model=selected_model,
-        tp_size=tp_size,
-        port=args.port,
-        container_name=args.container_name,
-        local_model_path=resolved_model_path,
-        hf_token=args.hf_token,
-        custom_served_name=args.served_name,
-    )
+    # ----------------------------------------------------------------------
+    # Step 5: Pre-Flight VRAM Check & Smart Auto-Fallback
+    # ----------------------------------------------------------------------
+    current_model = selected_model
+    current_model_path = resolved_model_path
+    current_tier = tier
+    has_gpu = bool(report.gpus and report.nvidia_runtime_available)
+    is_cpu_mode = args.force_cpu or not has_gpu
 
-    print("\n🐳 Phase 4: Launching vLLM Engine Container")
-    print("  Command:")
-    print("  " + " ".join(docker_cmd))
+    if not is_cpu_mode and current_model_path and report.gpus:
+        weight_size_gb = manager.get_local_model_size_gb(current_model_path)
+        free_gpu_vram = report.gpus[0].free_vram_gb
+        # On entry-level GPUs (<=6GB), weights must leave at least 1.2 GB for KV-cache, activations, and PyTorch runtime
+        max_allowable_weights = (free_gpu_vram - 1.2) if report.total_vram_gb <= 6.0 else (free_gpu_vram - 1.5)
+        if weight_size_gb > 0 and weight_size_gb > max_allowable_weights:
+            print(f"\n⚠️  [VRAM Warning]: Model '{current_model['model_id']}' weights ({weight_size_gb:.2f} GB) leave insufficient room for KV-Cache in Free GPU VRAM ({free_gpu_vram:.2f} GB)!")
+            print(f"   (Max safe weight size for this GPU: {max(0.0, max_allowable_weights):.2f} GB)")
+            
+            # Find a local text generation LLM that comfortably fits in available VRAM
+            fitting_models = []
+            for m in all_models:
+                # Exclude embedding and reranker models (they cannot serve chat/completions)
+                roles = m.get("supported_roles", [])
+                if m.get("category") in ("embedding", "reranker", "rag") and not any(r in roles for r in ("general-model", "reasoning-model", "coding-model")):
+                    continue
+                if "embedding" in m.get("model_id", "").lower() or "reranker" in m.get("model_id", "").lower():
+                    continue
+                l_path = m.get("local_path")
+                if l_path and os.path.exists(l_path):
+                    s_gb = manager.get_local_model_size_gb(l_path)
+                    if 0 < s_gb <= max_allowable_weights:
+                        fitting_models.append((m, s_gb))
+            
+            if fitting_models:
+                # Sort by capability (highest size that still fits)
+                fitting_models.sort(key=lambda x: x[1], reverse=True)
+                fallback_m, fallback_size = fitting_models[0]
+                print(f"\n🔄 [Auto-Fallback Activated]: Switching automatically to '{fallback_m['model_id']}'")
+                print(f"   • Weights Size: {fallback_size:.2f} GB (Leaves {free_gpu_vram - fallback_size:.2f} GB for KV cache)")
+                print(f"   • Local Path  : {fallback_m['local_path']}")
+                current_model = fallback_m
+                current_model_path = fallback_m["local_path"]
+            else:
+                print("\n⚠️ No local lightweight model found under safe weight limits.")
+
+    # Step 6: Deploy Container with Crash-Loop Protection & Fallback Execution
+    ts_ip = get_tailscale_ip()
+    host_ip = ts_ip or get_local_ip(args.gateway_url)
+    local_api_base = f"http://localhost:{args.port}"
+
+    # Intelligently resolve remote API base for Central Gateway
+    raw_api_base = args.api_base
+    if raw_api_base and ("127.0.0.1" in raw_api_base or "localhost" in raw_api_base):
+        print(f"\n⚠️ Notice: Local loopback address '{raw_api_base}' is unreachable from Central Gateway.")
+        print(f"   Auto-routing through network interface IP: http://{host_ip}:{args.port}")
+        remote_api_base = f"http://{host_ip}:{args.port}"
+    elif raw_api_base:
+        remote_api_base = raw_api_base
+    else:
+        remote_api_base = f"http://{host_ip}:{args.port}"
+
+    def deploy_and_wait(m_dict, m_path, cpu_mode) -> Tuple[bool, Optional[str]]:
+        # Fast path: Check if an existing container is already active and healthy
+        try:
+            import urllib.request
+            with urllib.request.urlopen(f"{local_api_base}/health", timeout=2) as h_resp:
+                if h_resp.status == 200:
+                    print(f"\n✅ Active vLLM container '{args.container_name}' detected and healthy at {local_api_base}!")
+                    return True, None
+        except Exception:
+            pass
+
+        cmd = manager.build_docker_command(
+            tier=current_tier,
+            selected_model=m_dict,
+            tp_size=tp_size,
+            port=args.port,
+            container_name=args.container_name,
+            local_model_path=m_path,
+            hf_token=args.hf_token,
+            custom_served_name=args.served_name,
+            free_vram_gb=report.gpus[0].free_vram_gb if report.gpus else None,
+            total_vram_gb=report.total_vram_gb,
+            is_cpu_mode=cpu_mode,
+        )
+        print("\n🐳 Phase 4: Launching vLLM Engine Container")
+        print("  Command:")
+        print("  " + " ".join(cmd))
+
+        if args.dry_run:
+            print("\n[Dry Run Mode]: Command printed above. Exiting.")
+            return True, None
+
+        subprocess.run(["docker", "rm", "-f", args.container_name], capture_output=True)
+        print("\n⏳ Starting container...")
+        p = subprocess.run(cmd)
+        if p.returncode != 0:
+            return False, f"Docker command exited with code {p.returncode}"
+
+        print(f"\n⏳ Phase 5: Validating vLLM Engine Initialization at {local_api_base} ...")
+        return wait_for_vllm_ready(local_api_base, container_name=args.container_name, timeout_sec=180, interval_sec=5)
+
+    is_ready, err_details = deploy_and_wait(current_model, current_model_path, is_cpu_mode)
+
+    if not is_ready and not args.dry_run:
+        print(f"\n❌ Startup Failed: {err_details}")
+        
+        # Second-chance emergency auto-fallback if GPU failed at runtime: try the lightest local model on GPU
+        lightest_candidates = [m for m in all_models if m.get("is_local") and "coder-0.5b" in m.get("model_id", "").lower() or "0.6b" in m.get("model_id", "").lower()]
+        if lightest_candidates and current_model["model_id"] != lightest_candidates[0]["model_id"]:
+            emergency_model = lightest_candidates[0]
+            print(f"\n🔄 [Emergency Auto-Fallback]: Auto-switching to ultra-light GPU model '{emergency_model['model_id']}'...")
+            current_model = emergency_model
+            current_model_path = emergency_model["local_path"]
+            is_ready, err_details = deploy_and_wait(current_model, current_model_path, is_cpu_mode=False)
+
+        if not is_ready:
+            print("\n❌ Final Error: vLLM could not become healthy.")
+            print(f"   Check logs: docker logs {args.container_name}")
+            return 1
 
     if args.dry_run:
-        print("\n[Dry Run Mode]: Command printed above. Exiting.")
         return 0
 
-    # Remove any existing container with the same name if stopped/leftover
-    subprocess.run(["docker", "rm", "-f", args.container_name], capture_output=True)
-
-    print("\n⏳ Starting container...")
-    proc = subprocess.run(docker_cmd)
-    if proc.returncode != 0:
-        print(f"\n❌ Docker launch failed with exit code {proc.returncode}")
-        return proc.returncode
-
-    # Step 6: Wait for Health / Model Ready
-    host_ip = get_local_ip(args.gateway_url)
-    local_api_base = f"http://localhost:{args.port}"
-    remote_api_base = args.api_base or f"http://{host_ip}:{args.port}"
-
-    print(f"\n⏳ Phase 5: Validating vLLM Engine Initialization at {local_api_base} ...")
-    is_ready = wait_for_vllm_ready(local_api_base, timeout_sec=400, interval_sec=5)
-    if not is_ready:
-        print("❌ Error: vLLM did not reach healthy state. Check docker logs:")
-        print(f"   docker logs {args.container_name}")
-        return 1
-
-    print(f"✅ vLLM is operational and listening on {remote_api_base}")
+    print(f"\n✅ vLLM is operational and listening on {remote_api_base}")
+    selected_model = current_model
 
     # Step 7: Central Auto-Registration & Heartbeat Daemon
     if args.gateway_url:
