@@ -40,7 +40,7 @@
             "deepseek-r1-distill-qwen-1.5b",
             "deepseek-r1-1.5b"
           ],
-          "served_model_name": "reasoning-model",
+          "served_model_name": "deepseek-r1-1.5b",
           "category": "reasoning",
           "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think>)",
           "benchmark_score": "MATH 83.1 / CoT Reasoning",
@@ -62,7 +62,7 @@
             "deepseek-coder-1.3b-instruct",
             "deepseek-coder-1.3b"
           ],
-          "served_model_name": "coding-model",
+          "served_model_name": "deepseek-coder-1.3b",
           "category": "coding",
           "category_label": "توسعه، تحلیل و خطایابی کد (Coding)",
           "benchmark_score": "HumanEval 68.2 / Code Pass@1",
@@ -84,7 +84,7 @@
             "qwen2.5-coder-0.5b-instruct",
             "qwen-0.5b-coder"
           ],
-          "served_model_name": "coding-model",
+          "served_model_name": "qwen-coder-0.5b",
           "category": "coding",
           "category_label": "مدل فوق‌سبک کدنویسی (Qwen 0.5B Coder)",
           "benchmark_score": "HumanEval 52.4 / Ultra-Low VRAM",
@@ -318,7 +318,7 @@
             "deepseek-r1-distill-qwen-1.5b",
             "deepseek-r1-1.5b"
           ],
-          "served_model_name": "reasoning-model",
+          "served_model_name": "deepseek-r1-1.5b",
           "category": "reasoning",
           "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think> CoT)",
           "benchmark_score": "MATH 83.1 / AIME 28.9",
@@ -364,7 +364,7 @@
             "qwen2.5-math-1.5b-instruct",
             "qwen-math-1.5b"
           ],
-          "served_model_name": "reasoning-model",
+          "served_model_name": "qwen-math-1.5b",
           "category": "reasoning",
           "category_label": "محاسبات و اثبات‌های تخصصی ریاضی (Qwen Math 1.5B)",
           "benchmark_score": "MATH 79.8 / GSM8K 84.8",
@@ -431,7 +431,7 @@
             "BGE-M3",
             "bge_m3"
           ],
-          "served_model_name": "rag-model",
+          "served_model_name": "bge-m3",
           "category": "rag",
           "category_label": "مدل پرچمدار امبدینگ چندزبانه و متراکم (BGE-M3 Embeddings)",
           "benchmark_score": "MTEB 64.1 / Top Retrieval",
@@ -452,7 +452,7 @@
             "qwen3-embedding-0.6b",
             "qwen3-embed"
           ],
-          "served_model_name": "rag-model",
+          "served_model_name": "qwen3-embed-0.6b",
           "category": "rag",
           "category_label": "امبدینگ فوق‌سریع نسل ۳ کوئن (Qwen3 Embeddings 0.6B)",
           "benchmark_score": "MTEB High / Ultra-Low VRAM",
@@ -473,7 +473,7 @@
             "qwen3-reranker-0.6b",
             "qwen3-rerank"
           ],
-          "served_model_name": "rag-model",
+          "served_model_name": "qwen3-rerank-0.6b",
           "category": "rag",
           "category_label": "بازرتبه‌بندی دقیق اسناد RAG (Qwen3 Reranker 0.6B)",
           "benchmark_score": "Cross-Encoder Top Accuracy",
@@ -527,7 +527,7 @@
             "deepseek-r1-distill-qwen-7b",
             "deepseek-r1-7b"
           ],
-          "served_model_name": "reasoning-model",
+          "served_model_name": "deepseek-r1-7b",
           "category": "reasoning",
           "category_label": "استدلال پیشرفته ریاضی و منطقی (DeepSeek-R1 7B)",
           "benchmark_score": "MATH 92.8 / AIME 55.5",
@@ -551,7 +551,7 @@
             "qwen-7b-coder",
             "Qwen2.5-Coder-7B-Instruct"
           ],
-          "served_model_name": "coding-model",
+          "served_model_name": "qwen-coder-7b",
           "category": "coding",
           "category_label": "برنامه‌نویسی و معماری نرم‌افزار تخصصی (7B Coder)",
           "benchmark_score": "HumanEval 84.1 / EvalPlus 78.4",
@@ -605,7 +605,7 @@
             "deepseek-r1-distill-qwen-14b",
             "deepseek-r1-14b"
           ],
-          "served_model_name": "reasoning-model",
+          "served_model_name": "deepseek-r1-14b",
           "category": "reasoning",
           "category_label": "استدلال فوق‌سنگین و پیچیده ریاضی (14B Reasoning)",
           "benchmark_score": "MATH 93.9 / AIME 69.7",

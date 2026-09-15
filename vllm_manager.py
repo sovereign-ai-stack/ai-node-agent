@@ -406,22 +406,10 @@ class VLLMManager:
             if override_max_len:
                 max_len = override_max_len
 
-        # Collect all alias names so vLLM serves all roles, paths, and model names simultaneously
-        served_names = [served_name]
-        if selected_model.get("model_id") and selected_model["model_id"] not in served_names:
-            served_names.append(selected_model["model_id"])
-        for r in selected_model.get("supported_roles", []):
-            if r not in served_names:
-                served_names.append(r)
-        for loc in selected_model.get("local_names", []):
-            if loc not in served_names:
-                served_names.append(loc)
-
         vllm_args = [
             image,
             "--model", model_to_load,
-            "--served-model-name",
-            *served_names,
+            "--served-model-name", served_name,
             "--host", "0.0.0.0",
             "--port", "8000",
             "--gpu-memory-utilization", str(gpu_util),
