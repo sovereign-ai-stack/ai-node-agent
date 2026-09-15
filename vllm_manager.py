@@ -304,10 +304,17 @@ class VLLMManager:
         if not os.path.isdir(directory):
             return 0.0
         try:
+            # If the directory contains .gguf files, measure only the single active file to be loaded (preferring Q4)
+            gguf_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".gguf")]
+            if gguf_files:
+                q4_files = [f for f in gguf_files if "q4" in os.path.basename(f).lower()]
+                target_gguf = q4_files[0] if q4_files else gguf_files[0]
+                return round(os.path.getsize(target_gguf) / (1024**3), 2)
+
             total_bytes = 0
             for root, _, files in os.walk(directory):
                 for f in files:
-                    if f.endswith((".safetensors", ".bin", ".pt", ".gguf")):
+                    if f.endswith((".safetensors", ".bin", ".pt")):
                         total_bytes += os.path.getsize(os.path.join(root, f))
             return round(total_bytes / (1024**3), 2)
         except Exception:
@@ -358,6 +365,13 @@ class VLLMManager:
             abs_path = os.path.abspath(local_model_path)
             cmd.extend(["-v", f"{abs_path}:/models/active_model:ro"])
             model_to_load = "/models/active_model"
+            if os.path.isdir(abs_path):
+                gguf_files = [f for f in os.listdir(abs_path) if f.endswith(".gguf")]
+                if gguf_files:
+                    # Prefer 4-bit quantized GGUF (e.g. Q4_K_M)
+                    q4_files = [f for f in gguf_files if "q4" in f.lower()]
+                    target_gguf = q4_files[0] if q4_files else gguf_files[0]
+                    model_to_load = f"/models/active_model/{target_gguf}"
         else:
             cmd.extend(["-v", "vllm-cache:/root/.cache/huggingface"])
 
@@ -419,7 +433,7 @@ class VLLMManager:
             vllm_args.append("--enforce-eager")
 
         quant = selected_model.get("quantization") or tier.get("quantization")
-        if quant:
+        if quant and not model_to_load.endswith(".gguf"):
             vllm_args.extend(["--quantization", quant])
 
         dtype = selected_model.get("dtype") or tier.get("dtype")

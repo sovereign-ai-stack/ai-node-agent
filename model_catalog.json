@@ -172,6 +172,74 @@
       "max_vram_gb": 6.0,
       "recommended_models": [
         {
+          "model_id": "ibnsina-llm/ibnsina-3b",
+          "local_names": [
+            "ibnsina-3b",
+            "ibnsina-3b-Q4_K_M",
+            "ibnsina",
+            "ibnsina-3b-Q4_K_M.gguf"
+          ],
+          "served_model_name": "ibnsina-3b",
+          "category": "general",
+          "category_label": "مدل بومی فارسی ابن‌سینا نسل جدید (IbnSina 3B - 4-bit)",
+          "benchmark_score": "PersianMedQA / Native Persian LLM",
+          "supported_roles": [
+            "general-model",
+            "rag-model"
+          ],
+          "dtype": "float16",
+          "quantization": null,
+          "max_model_len": 2048,
+          "max_num_seqs": 16,
+          "gpu_memory_utilization": 0.7,
+          "description": "مدل ۳ میلیارد پارامتری بومی آموزش‌دیده از صفر با زبان فارسی (۱۰۰ میلیارد توکن)، نسخه ۴ بیتی فوق‌سبک ۱.۸ گیگابایتی."
+        },
+        {
+          "model_id": "Qwen/Qwen3-1.7B-AWQ",
+          "local_names": [
+            "Qwen3-1.7B-AWQ",
+            "qwen3-1.7b-awq",
+            "qwen3-1.7b",
+            "Qwen3-1.7B"
+          ],
+          "served_model_name": "qwen3-1.7b",
+          "category": "general",
+          "category_label": "نسل جدید فوق‌سبک کوئن ۳ بهینه ۴ بیتی (Qwen3 1.7B AWQ)",
+          "benchmark_score": "MMLU 64.0 / AWQ High-Speed",
+          "supported_roles": [
+            "general-model",
+            "coding-model",
+            "rag-model"
+          ],
+          "dtype": "float16",
+          "quantization": "awq",
+          "max_model_len": 4096,
+          "max_num_seqs": 16,
+          "gpu_memory_utilization": 0.7,
+          "description": "مدل فشرده ۴ بیتی نسل ۳ کوئن با حجم ۱.۳ گیگابایت، فوق‌العاده سریع و بهینه برای کارت‌های گرافیک ۴ گیگابایت."
+        },
+        {
+          "model_id": "arxyzan/zaya-1b-it",
+          "local_names": [
+            "zaya-1b-it",
+            "zaya-1b",
+            "zaya"
+          ],
+          "served_model_name": "zaya-1b",
+          "category": "general",
+          "category_label": "مدل چت فارسی زایا مبتنی بر جما (Zaya 1B Instruct)",
+          "benchmark_score": "Persian Chat / Fast 1B",
+          "supported_roles": [
+            "general-model"
+          ],
+          "dtype": "bfloat16",
+          "quantization": null,
+          "max_model_len": 4096,
+          "max_num_seqs": 16,
+          "gpu_memory_utilization": 0.75,
+          "description": "مدل آموزش‌دیده و چت فارسی با وزن سبک ۱ میلیارد پارامتری بر پایه Gemma 3."
+        },
+        {
           "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
           "local_names": [
             "Qwen2.5-3B-Instruct-AWQ",
@@ -368,8 +436,7 @@
           "category_label": "مدل پرچمدار امبدینگ چندزبانه و متراکم (BGE-M3 Embeddings)",
           "benchmark_score": "MTEB 64.1 / Top Retrieval",
           "supported_roles": [
-            "rag-model",
-            "general-model"
+            "rag-model"
           ],
           "dtype": "float16",
           "quantization": null,
@@ -390,8 +457,7 @@
           "category_label": "امبدینگ فوق‌سریع نسل ۳ کوئن (Qwen3 Embeddings 0.6B)",
           "benchmark_score": "MTEB High / Ultra-Low VRAM",
           "supported_roles": [
-            "rag-model",
-            "general-model"
+            "rag-model"
           ],
           "dtype": "float16",
           "quantization": null,
@@ -412,8 +478,7 @@
           "category_label": "بازرتبه‌بندی دقیق اسناد RAG (Qwen3 Reranker 0.6B)",
           "benchmark_score": "Cross-Encoder Top Accuracy",
           "supported_roles": [
-            "rag-model",
-            "general-model"
+            "rag-model"
           ],
           "dtype": "float16",
           "quantization": null,

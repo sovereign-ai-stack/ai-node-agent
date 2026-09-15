@@ -388,12 +388,17 @@ def main():
             # Find a local text generation LLM that comfortably fits in available VRAM
             fitting_models = []
             for m in all_models:
-                # Exclude embedding and reranker models (they cannot serve chat/completions)
+                # Strictly exclude embedding, reranker, and RAG models (they cannot serve chat/completions!)
+                cat = (m.get("category") or "").lower()
+                mid = (m.get("model_id") or "").lower()
+                if cat in ("embedding", "reranker", "rag"):
+                    continue
+                if "embedding" in mid or "rerank" in mid or "bge" in mid:
+                    continue
                 roles = m.get("supported_roles", [])
-                if m.get("category") in ("embedding", "reranker", "rag") and not any(r in roles for r in ("general-model", "reasoning-model", "coding-model")):
+                if not any(r in roles for r in ("general-model", "reasoning-model", "coding-model")):
                     continue
-                if "embedding" in m.get("model_id", "").lower() or "reranker" in m.get("model_id", "").lower():
-                    continue
+
                 l_path = m.get("local_path")
                 if l_path and os.path.exists(l_path):
                     s_gb = manager.get_local_model_size_gb(l_path)
@@ -429,13 +434,26 @@ def main():
         remote_api_base = f"http://{host_ip}:{args.port}"
 
     def deploy_and_wait(m_dict, m_path, cpu_mode) -> Tuple[bool, Optional[str]]:
-        # Fast path: Check if an existing container is already active and healthy
+        # Fast path: Check if an existing container is already active AND serving the requested model
         try:
-            import urllib.request
-            with urllib.request.urlopen(f"{local_api_base}/health", timeout=2) as h_resp:
-                if h_resp.status == 200:
-                    print(f"\n✅ Active vLLM container '{args.container_name}' detected and healthy at {local_api_base}!")
-                    return True, None
+            import json, urllib.request
+            with urllib.request.urlopen(f"{local_api_base}/v1/models", timeout=2) as m_resp:
+                if m_resp.status == 200:
+                    models_data = json.loads(m_resp.read().decode()).get("data", [])
+                    served_model_ids = {m.get("id") for m in models_data}
+                    desired_names = {
+                        args.served_name,
+                        m_dict.get("served_model_name"),
+                        m_dict.get("model_id"),
+                        *(m_dict.get("local_names") or []),
+                        *(m_dict.get("supported_roles") or []),
+                    }
+                    desired_names.discard(None)
+                    if desired_names.intersection(served_model_ids):
+                        print(f"\n✅ Active vLLM container '{args.container_name}' is already serving {m_dict.get('model_id')} and healthy at {local_api_base}!")
+                        return True, None
+                    else:
+                        print(f"\n🔄 Running container '{args.container_name}' is serving different model ({served_model_ids}). Re-deploying for {m_dict.get('served_model_name')}...")
         except Exception:
             pass
 
