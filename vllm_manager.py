@@ -22,7 +22,7 @@ from hardware_detector import SystemHardwareReport
 
 class VLLMManager:
     def __init__(self, catalog_path: str):
-        with open(catalog_path, "r", encoding="utf-8") as f:
+        with open(catalog_path, "r", encoding="utf-8-sig") as f:
             self.catalog = json.load(f)
 
     def select_tier(
@@ -392,11 +392,33 @@ class VLLMManager:
             safe_ratio = round(max(0.50, min(0.75, (avail_free - 0.25) / total_vram_gb)), 2)
             gpu_util = override_gpu_util or min(gpu_util, safe_ratio)
 
-            # 2. Limit context window to 2048 to keep KV cache compact (~1.2GB)
-            if not override_max_len and max_len > 2048:
-                max_len = 2048
-            elif override_max_len:
+            # 2. Smart Context Window Allocation based on real model footprint
+            if override_max_len:
                 max_len = override_max_len
+            else:
+                model_size_gb = 2.0  # Default safe assumption
+                if local_model_path and os.path.exists(local_model_path):
+                    if os.path.isdir(local_model_path):
+                        model_size_gb = VLLMManager.get_local_model_size_gb(local_model_path)
+                    elif os.path.isfile(local_model_path):
+                        model_size_gb = round(os.path.getsize(local_model_path) / (1024**3), 2)
+                
+                if model_size_gb <= 0.1:
+                    model_size_gb = 2.0
+
+                # Formula: Allocated VRAM - Model Weights - vLLM Engine Overhead (~0.4GB)
+                usable_vram_for_kv = (total_vram_gb * gpu_util) - model_size_gb - 0.4
+                
+                if usable_vram_for_kv > 0.3:
+                    # Heuristic: 1GB of KV Cache holds ~6000 tokens for efficient small models (GQA)
+                    calculated_tokens = int(usable_vram_for_kv * 6000)
+                    calculated_tokens = (calculated_tokens // 1024) * 1024  # Snap to 1024 boundaries
+                    max_len = min(max_len, max(2048, calculated_tokens))
+                    print(f"🧠 [Smart Context Allocation]: {usable_vram_for_kv:.2f} GB usable for KV-Cache -> Dynamically set max_model_len to {max_len} tokens!")
+                else:
+                    # Severe memory pressure: drop to 1024 to avoid OOM
+                    max_len = min(max_len, 1024)
+                    print(f"⚠️ [Smart Context Allocation]: Severe memory pressure! {usable_vram_for_kv:.2f} GB usable. Clamped max_model_len to {max_len} tokens to prevent OOM crash.")
 
             # 3. Enforce eager execution to eliminate CUDA graph memory capture
             force_eager = True
@@ -405,6 +427,15 @@ class VLLMManager:
                 gpu_util = override_gpu_util
             if override_max_len:
                 max_len = override_max_len
+
+        # ── GGUF Detection ────────────────────────────────────────────────────
+        # GGUF is a binary quantized format (used by llama.cpp / ibnsina).
+        # vLLM REQUIRES --load-format gguf explicitly when loading .gguf files.
+        # Without it, vLLM tries to parse the binary as UTF-8 JSON and crashes:
+        #   UnicodeDecodeError: 'utf-8' codec can't decode byte 0xbb ...
+        # Also: --dtype and --quantization must NOT be passed for GGUF because
+        # quantization is baked into the file itself (e.g. Q4_K_M header).
+        is_gguf = model_to_load.endswith(".gguf")
 
         vllm_args = [
             image,
@@ -417,15 +448,25 @@ class VLLMManager:
             "--max-num-seqs", str(max_seqs),
         ]
 
+        # Must declare GGUF load format — vLLM does not auto-detect binary format
+        if is_gguf:
+            vllm_args.extend(["--load-format", "gguf"])
+
         if force_eager:
             vllm_args.append("--enforce-eager")
 
         quant = selected_model.get("quantization") or tier.get("quantization")
-        if quant and not model_to_load.endswith(".gguf"):
+        if quant and not is_gguf:
+            # AWQ/GPTQ flags are for HuggingFace safetensors only.
+            # GGUF files embed their quantization in the file header — passing
+            # --quantization here would conflict and cause startup errors.
             vllm_args.extend(["--quantization", quant])
 
         dtype = selected_model.get("dtype") or tier.get("dtype")
-        if dtype:
+        if dtype and not is_gguf:
+            # dtype is irrelevant for GGUF — quantization precision is in the filename
+            # (e.g. Q4_K_M = 4-bit, K-quant, Medium). Passing --dtype float16 would
+            # override the GGUF's native type and cause a load error.
             vllm_args.extend(["--dtype", dtype])
 
         if tp_size > 1:

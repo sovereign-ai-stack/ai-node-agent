@@ -166,9 +166,9 @@ def interactive_arrow_catalog_browser(models: List[Dict[str, Any]], initial_idx:
 
         for i in range(start, end):
             m = models[i]
-            pointer = " 👉 \033[1;32m[*]\033[0m" if i == idx else "    [ ]"
+            pointer = " 🚀 \033[1;32m[*]\033[0m" if i == idx else "    [ ]"
             local_tag = "\033[1;36m[Local Disk]\033[0m" if m.get("is_local") else "[HuggingFace]"
-            min_vram = f"{m.get('min_vram_gb', 0.0):.1f}GB VRAM"
+            min_vram = f"Min: {m.get('min_vram_gb', 0.0):.1f}GB VRAM"
             category = m.get("category_label", m.get("category", "General"))
             
             if i == idx:
@@ -441,12 +441,13 @@ def main():
                 if m_resp.status == 200:
                     models_data = json.loads(m_resp.read().decode()).get("data", [])
                     served_model_ids = {m.get("id") for m in models_data}
+                    # Only check served_model_name and local aliases — NOT supported_roles.
+                    # vLLM returns only the --served-model-name as model ID.
+                    # Checking roles (e.g. "general-model") would cause false matches.
                     desired_names = {
                         args.served_name,
                         m_dict.get("served_model_name"),
-                        m_dict.get("model_id"),
                         *(m_dict.get("local_names") or []),
-                        *(m_dict.get("supported_roles") or []),
                     }
                     desired_names.discard(None)
                     if desired_names.intersection(served_model_ids):

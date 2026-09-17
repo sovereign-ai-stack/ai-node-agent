@@ -1,4 +1,4 @@
-{
+﻿{
   "schema_version": "3.1",
   "default_vllm_image": "vllm/vllm-openai:latest",
   "embedding_reserve_vram_gb": 0.5,
@@ -19,7 +19,7 @@
           ],
           "served_model_name": "qwen-1.5b",
           "category": "general",
-          "category_label": "دستیار عمومی و پایگاه دانش (فارسی روان)",
+          "category_label": "Ø¯Ø³ØªÛŒØ§Ø± Ø¹Ù…ÙˆÙ…ÛŒ Ùˆ Ù¾Ø§ÛŒÚ¯Ø§Ù‡ Ø¯Ø§Ù†Ø´ (ÙØ§Ø±Ø³ÛŒ Ø±ÙˆØ§Ù†)",
           "benchmark_score": "MMLU 62.5 / Fast Multilingual",
           "supported_roles": [
             "general-model",
@@ -31,7 +31,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.85,
-          "description": "مدل ۱.۵ میلیارد پارامتری بسیار سریع و سبک با پشتیبانی عالی از زبان فارسی."
+          "description": "Ù…Ø¯Ù„ Û±.Ûµ Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ø¨Ø³ÛŒØ§Ø± Ø³Ø±ÛŒØ¹ Ùˆ Ø³Ø¨Ú© Ø¨Ø§ Ù¾Ø´ØªÛŒØ¨Ø§Ù†ÛŒ Ø¹Ø§Ù„ÛŒ Ø§Ø² Ø²Ø¨Ø§Ù† ÙØ§Ø±Ø³ÛŒ."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
@@ -42,7 +42,7 @@
           ],
           "served_model_name": "deepseek-r1-1.5b",
           "category": "reasoning",
-          "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think>)",
+          "category_label": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ø¹Ù…ÛŒÙ‚ Ùˆ Ù…Ù†Ø·Ù‚ÛŒ Ø¨Ø§ ØªÚ¯ ØªÙÚ©Ø± (<think>)",
           "benchmark_score": "MATH 83.1 / CoT Reasoning",
           "supported_roles": [
             "reasoning-model",
@@ -53,7 +53,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.85,
-          "description": "استدلال منطقی چندمرحله‌ای بر پایه تکنولوژی DeepSeek-R1 با خروجی زنجیره تفکر."
+          "description": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ù…Ù†Ø·Ù‚ÛŒ Ú†Ù†Ø¯Ù…Ø±Ø­Ù„Ù‡â€ŒØ§ÛŒ Ø¨Ø± Ù¾Ø§ÛŒÙ‡ ØªÚ©Ù†ÙˆÙ„ÙˆÚ˜ÛŒ DeepSeek-R1 Ø¨Ø§ Ø®Ø±ÙˆØ¬ÛŒ Ø²Ù†Ø¬ÛŒØ±Ù‡ ØªÙÚ©Ø±."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-Coder-1.3B-instruct",
@@ -64,7 +64,7 @@
           ],
           "served_model_name": "deepseek-coder-1.3b",
           "category": "coding",
-          "category_label": "توسعه، تحلیل و خطایابی کد (Coding)",
+          "category_label": "ØªÙˆØ³Ø¹Ù‡ØŒ ØªØ­Ù„ÛŒÙ„ Ùˆ Ø®Ø·Ø§ÛŒØ§Ø¨ÛŒ Ú©Ø¯ (Coding)",
           "benchmark_score": "HumanEval 68.2 / Code Pass@1",
           "supported_roles": [
             "coding-model",
@@ -75,7 +75,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.85,
-          "description": "تولید کدهای پایتون، کوئری‌های SQL و خطایابی الگوریتم‌ها با حجم بسیار پایین."
+          "description": "ØªÙˆÙ„ÛŒØ¯ Ú©Ø¯Ù‡Ø§ÛŒ Ù¾Ø§ÛŒØªÙˆÙ†ØŒ Ú©ÙˆØ¦Ø±ÛŒâ€ŒÙ‡Ø§ÛŒ SQL Ùˆ Ø®Ø·Ø§ÛŒØ§Ø¨ÛŒ Ø§Ù„Ú¯ÙˆØ±ÛŒØªÙ…â€ŒÙ‡Ø§ Ø¨Ø§ Ø­Ø¬Ù… Ø¨Ø³ÛŒØ§Ø± Ù¾Ø§ÛŒÛŒÙ†."
         },
         {
           "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
@@ -86,7 +86,7 @@
           ],
           "served_model_name": "qwen-coder-0.5b",
           "category": "coding",
-          "category_label": "مدل فوق‌سبک کدنویسی (Qwen 0.5B Coder)",
+          "category_label": "Ù…Ø¯Ù„ ÙÙˆÙ‚â€ŒØ³Ø¨Ú© Ú©Ø¯Ù†ÙˆÛŒØ³ÛŒ (Qwen 0.5B Coder)",
           "benchmark_score": "HumanEval 52.4 / Ultra-Low VRAM",
           "supported_roles": [
             "coding-model",
@@ -97,7 +97,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.8,
-          "description": "سبک‌ترین مدل تخصصی کدنویسی برای سیستم‌های بدون کارت گرافیک یا زیر ۲ گیگابایت حافظه."
+          "description": "Ø³Ø¨Ú©â€ŒØªØ±ÛŒÙ† Ù…Ø¯Ù„ ØªØ®ØµØµÛŒ Ú©Ø¯Ù†ÙˆÛŒØ³ÛŒ Ø¨Ø±Ø§ÛŒ Ø³ÛŒØ³ØªÙ…â€ŒÙ‡Ø§ÛŒ Ø¨Ø¯ÙˆÙ† Ú©Ø§Ø±Øª Ú¯Ø±Ø§ÙÛŒÚ© ÛŒØ§ Ø²ÛŒØ± Û² Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØª Ø­Ø§ÙØ¸Ù‡."
         },
         {
           "model_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
@@ -108,7 +108,7 @@
           ],
           "served_model_name": "smollm-1.7b",
           "category": "general",
-          "category_label": "دستیار فشرده هاگینگ‌فیس (SmolLM2 1.7B)",
+          "category_label": "Ø¯Ø³ØªÛŒØ§Ø± ÙØ´Ø±Ø¯Ù‡ Ù‡Ø§Ú¯ÛŒÙ†Ú¯â€ŒÙÛŒØ³ (SmolLM2 1.7B)",
           "benchmark_score": "MMLU 53.5 / Compact",
           "supported_roles": [
             "general-model",
@@ -119,7 +119,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.8,
-          "description": "مدل ۱.۷ میلیارد پارامتری بهینه هاگینگ‌فیس برای گفتگوهای عمومی سریع."
+          "description": "Ù…Ø¯Ù„ Û±.Û· Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ø¨Ù‡ÛŒÙ†Ù‡ Ù‡Ø§Ú¯ÛŒÙ†Ú¯â€ŒÙÛŒØ³ Ø¨Ø±Ø§ÛŒ Ú¯ÙØªÚ¯ÙˆÙ‡Ø§ÛŒ Ø¹Ù…ÙˆÙ…ÛŒ Ø³Ø±ÛŒØ¹."
         },
         {
           "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
@@ -130,7 +130,7 @@
           ],
           "served_model_name": "tinyllama-1.1b",
           "category": "general",
-          "category_label": "مدل تاینی‌لاما (TinyLlama 1.1B)",
+          "category_label": "Ù…Ø¯Ù„ ØªØ§ÛŒÙ†ÛŒâ€ŒÙ„Ø§Ù…Ø§ (TinyLlama 1.1B)",
           "benchmark_score": "MMLU 38.2 / Ultra-Light",
           "supported_roles": [
             "general-model"
@@ -140,7 +140,7 @@
           "max_model_len": 2048,
           "max_num_seqs": 8,
           "gpu_memory_utilization": 0.75,
-          "description": "مدل ۱.۱ میلیارد پارامتری مینیاتوری مناسب برای محیط‌های با منابع فوق‌العاده محدود."
+          "description": "Ù…Ø¯Ù„ Û±.Û± Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ù…ÛŒÙ†ÛŒØ§ØªÙˆØ±ÛŒ Ù…Ù†Ø§Ø³Ø¨ Ø¨Ø±Ø§ÛŒ Ù…Ø­ÛŒØ·â€ŒÙ‡Ø§ÛŒ Ø¨Ø§ Ù…Ù†Ø§Ø¨Ø¹ ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ù…Ø­Ø¯ÙˆØ¯."
         },
         {
           "model_id": "Qwen/Qwen3-0.6B",
@@ -151,7 +151,7 @@
           ],
           "served_model_name": "qwen-0.6b",
           "category": "general",
-          "category_label": "نسل جدید فوق‌سبک کوئن (Qwen3 0.6B)",
+          "category_label": "Ù†Ø³Ù„ Ø¬Ø¯ÛŒØ¯ ÙÙˆÙ‚â€ŒØ³Ø¨Ú© Ú©ÙˆØ¦Ù† (Qwen3 0.6B)",
           "benchmark_score": "MMLU 48.0 / Ultra-Fast",
           "supported_roles": [
             "general-model"
@@ -161,7 +161,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.75,
-          "description": "مدل ۶۰۰ میلیون پارامتری نسل سوم با سرعت استنتاج بالای ۱۵۰ توکن بر ثانیه."
+          "description": "Ù…Ø¯Ù„ Û¶Û°Û° Ù…ÛŒÙ„ÛŒÙˆÙ† Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ù†Ø³Ù„ Ø³ÙˆÙ… Ø¨Ø§ Ø³Ø±Ø¹Øª Ø§Ø³ØªÙ†ØªØ§Ø¬ Ø¨Ø§Ù„Ø§ÛŒ Û±ÛµÛ° ØªÙˆÚ©Ù† Ø¨Ø± Ø«Ø§Ù†ÛŒÙ‡."
         }
       ]
     },
@@ -181,7 +181,7 @@
           ],
           "served_model_name": "ibnsina-3b",
           "category": "general",
-          "category_label": "مدل بومی فارسی ابن‌سینا نسل جدید (IbnSina 3B - 4-bit)",
+          "category_label": "Ù…Ø¯Ù„ Ø¨ÙˆÙ…ÛŒ ÙØ§Ø±Ø³ÛŒ Ø§Ø¨Ù†â€ŒØ³ÛŒÙ†Ø§ Ù†Ø³Ù„ Ø¬Ø¯ÛŒØ¯ (IbnSina 3B - 4-bit)",
           "benchmark_score": "PersianMedQA / Native Persian LLM",
           "supported_roles": [
             "general-model",
@@ -192,7 +192,7 @@
           "max_model_len": 2048,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.7,
-          "description": "مدل ۳ میلیارد پارامتری بومی آموزش‌دیده از صفر با زبان فارسی (۱۰۰ میلیارد توکن)، نسخه ۴ بیتی فوق‌سبک ۱.۸ گیگابایتی."
+          "description": "Ù…Ø¯Ù„ Û³ Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ø¨ÙˆÙ…ÛŒ Ø¢Ù…ÙˆØ²Ø´â€ŒØ¯ÛŒØ¯Ù‡ Ø§Ø² ØµÙØ± Ø¨Ø§ Ø²Ø¨Ø§Ù† ÙØ§Ø±Ø³ÛŒ (Û±Û°Û° Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ ØªÙˆÚ©Ù†)ØŒ Ù†Ø³Ø®Ù‡ Û´ Ø¨ÛŒØªÛŒ ÙÙˆÙ‚â€ŒØ³Ø¨Ú© Û±.Û¸ Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØªÛŒ."
         },
         {
           "model_id": "Qwen/Qwen3-1.7B-AWQ",
@@ -204,7 +204,7 @@
           ],
           "served_model_name": "qwen3-1.7b",
           "category": "general",
-          "category_label": "نسل جدید فوق‌سبک کوئن ۳ بهینه ۴ بیتی (Qwen3 1.7B AWQ)",
+          "category_label": "Ù†Ø³Ù„ Ø¬Ø¯ÛŒØ¯ ÙÙˆÙ‚â€ŒØ³Ø¨Ú© Ú©ÙˆØ¦Ù† Û³ Ø¨Ù‡ÛŒÙ†Ù‡ Û´ Ø¨ÛŒØªÛŒ (Qwen3 1.7B AWQ)",
           "benchmark_score": "MMLU 64.0 / AWQ High-Speed",
           "supported_roles": [
             "general-model",
@@ -213,10 +213,10 @@
           ],
           "dtype": "float16",
           "quantization": "awq",
-          "max_model_len": 4096,
+          "max_model_len": 32768,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.7,
-          "description": "مدل فشرده ۴ بیتی نسل ۳ کوئن با حجم ۱.۳ گیگابایت، فوق‌العاده سریع و بهینه برای کارت‌های گرافیک ۴ گیگابایت."
+          "description": "Ù…Ø¯Ù„ ÙØ´Ø±Ø¯Ù‡ Û´ Ø¨ÛŒØªÛŒ Ù†Ø³Ù„ Û³ Ú©ÙˆØ¦Ù† Ø¨Ø§ Ø­Ø¬Ù… Û±.Û³ Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØªØŒ ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ø³Ø±ÛŒØ¹ Ùˆ Ø¨Ù‡ÛŒÙ†Ù‡ Ø¨Ø±Ø§ÛŒ Ú©Ø§Ø±Øªâ€ŒÙ‡Ø§ÛŒ Ú¯Ø±Ø§ÙÛŒÚ© Û´ Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØª."
         },
         {
           "model_id": "arxyzan/zaya-1b-it",
@@ -227,7 +227,7 @@
           ],
           "served_model_name": "zaya-1b",
           "category": "general",
-          "category_label": "مدل چت فارسی زایا مبتنی بر جما (Zaya 1B Instruct)",
+          "category_label": "Ù…Ø¯Ù„ Ú†Øª ÙØ§Ø±Ø³ÛŒ Ø²Ø§ÛŒØ§ Ù…Ø¨ØªÙ†ÛŒ Ø¨Ø± Ø¬Ù…Ø§ (Zaya 1B Instruct)",
           "benchmark_score": "Persian Chat / Fast 1B",
           "supported_roles": [
             "general-model"
@@ -237,7 +237,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.75,
-          "description": "مدل آموزش‌دیده و چت فارسی با وزن سبک ۱ میلیارد پارامتری بر پایه Gemma 3."
+          "description": "Ù…Ø¯Ù„ Ø¢Ù…ÙˆØ²Ø´â€ŒØ¯ÛŒØ¯Ù‡ Ùˆ Ú†Øª ÙØ§Ø±Ø³ÛŒ Ø¨Ø§ ÙˆØ²Ù† Ø³Ø¨Ú© Û± Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ø¨Ø± Ù¾Ø§ÛŒÙ‡ Gemma 3."
         },
         {
           "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
@@ -248,7 +248,7 @@
           ],
           "served_model_name": "qwen-3b",
           "category": "general",
-          "category_label": "پرچمدار بهینه ۴ بیتی کوئن (Qwen 3B AWQ - انتخاب طلایی ۴ گیگ)",
+          "category_label": "Ù¾Ø±Ú†Ù…Ø¯Ø§Ø± Ø¨Ù‡ÛŒÙ†Ù‡ Û´ Ø¨ÛŒØªÛŒ Ú©ÙˆØ¦Ù† (Qwen 3B AWQ - Ø§Ù†ØªØ®Ø§Ø¨ Ø·Ù„Ø§ÛŒÛŒ Û´ Ú¯ÛŒÚ¯)",
           "benchmark_score": "MMLU 68.4 / AWQ High-Speed",
           "supported_roles": [
             "general-model",
@@ -261,7 +261,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.75,
-          "description": "نسخه ۴ بیتی فشرده ۳ میلیارد پارامتری کوئن با نهایت سرعت و مصرف ۲.۵ گیگابایت VRAM."
+          "description": "Ù†Ø³Ø®Ù‡ Û´ Ø¨ÛŒØªÛŒ ÙØ´Ø±Ø¯Ù‡ Û³ Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ú©ÙˆØ¦Ù† Ø¨Ø§ Ù†Ù‡Ø§ÛŒØª Ø³Ø±Ø¹Øª Ùˆ Ù…ØµØ±Ù Û².Ûµ Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØª VRAM."
         },
         {
           "model_id": "Qwen/Qwen2.5-1.5B-Instruct-AWQ",
@@ -272,7 +272,7 @@
           ],
           "served_model_name": "qwen-1.5b",
           "category": "general",
-          "category_label": "دستیار سبک و فوق‌سریع ۴ بیتی (Qwen 1.5B AWQ)",
+          "category_label": "Ø¯Ø³ØªÛŒØ§Ø± Ø³Ø¨Ú© Ùˆ ÙÙˆÙ‚â€ŒØ³Ø±ÛŒØ¹ Û´ Ø¨ÛŒØªÛŒ (Qwen 1.5B AWQ)",
           "benchmark_score": "MMLU 62.5 / Ultra-Fast",
           "supported_roles": [
             "general-model",
@@ -284,7 +284,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.7,
-          "description": "فوق‌العاده سریع با حجم فقط ۱.۵ گیگابایت و بازدهی عالی برای کانتکست‌های طولانی."
+          "description": "ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ø³Ø±ÛŒØ¹ Ø¨Ø§ Ø­Ø¬Ù… ÙÙ‚Ø· Û±.Ûµ Ú¯ÛŒÚ¯Ø§Ø¨Ø§ÛŒØª Ùˆ Ø¨Ø§Ø²Ø¯Ù‡ÛŒ Ø¹Ø§Ù„ÛŒ Ø¨Ø±Ø§ÛŒ Ú©Ø§Ù†ØªÚ©Ø³Øªâ€ŒÙ‡Ø§ÛŒ Ø·ÙˆÙ„Ø§Ù†ÛŒ."
         },
         {
           "model_id": "Qwen/Qwen2.5-3B-Instruct",
@@ -296,7 +296,7 @@
           ],
           "served_model_name": "qwen-3b",
           "category": "general",
-          "category_label": "بهترین دستیار هوشمند و پایگاه دانش (General & RAG - انتخاب طلایی ۴ گیگ)",
+          "category_label": "Ø¨Ù‡ØªØ±ÛŒÙ† Ø¯Ø³ØªÛŒØ§Ø± Ù‡ÙˆØ´Ù…Ù†Ø¯ Ùˆ Ù¾Ø§ÛŒÚ¯Ø§Ù‡ Ø¯Ø§Ù†Ø´ (General & RAG - Ø§Ù†ØªØ®Ø§Ø¨ Ø·Ù„Ø§ÛŒÛŒ Û´ Ú¯ÛŒÚ¯)",
           "benchmark_score": "MMLU 68.4 / Superior Persian QA",
           "supported_roles": [
             "general-model",
@@ -309,7 +309,7 @@
           "max_model_len": 8192,
           "max_num_seqs": 24,
           "gpu_memory_utilization": 0.9,
-          "description": "بالاترین دقت و روانی زبان فارسی برای VRAM 4GB با پنجره زمینه ۸ هزار توکن."
+          "description": "Ø¨Ø§Ù„Ø§ØªØ±ÛŒÙ† Ø¯Ù‚Øª Ùˆ Ø±ÙˆØ§Ù†ÛŒ Ø²Ø¨Ø§Ù† ÙØ§Ø±Ø³ÛŒ Ø¨Ø±Ø§ÛŒ VRAM 4GB Ø¨Ø§ Ù¾Ù†Ø¬Ø±Ù‡ Ø²Ù…ÛŒÙ†Ù‡ Û¸ Ù‡Ø²Ø§Ø± ØªÙˆÚ©Ù†."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
@@ -320,7 +320,7 @@
           ],
           "served_model_name": "deepseek-r1-1.5b",
           "category": "reasoning",
-          "category_label": "استدلال عمیق و منطقی با تگ تفکر (<think> CoT)",
+          "category_label": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ø¹Ù…ÛŒÙ‚ Ùˆ Ù…Ù†Ø·Ù‚ÛŒ Ø¨Ø§ ØªÚ¯ ØªÙÚ©Ø± (<think> CoT)",
           "benchmark_score": "MATH 83.1 / AIME 28.9",
           "supported_roles": [
             "reasoning-model",
@@ -331,7 +331,7 @@
           "max_model_len": 8192,
           "max_num_seqs": 24,
           "gpu_memory_utilization": 0.88,
-          "description": "مدل استدلالی بی‌رقیب در رده زیر ۲ میلیارد پارامتر برای حل مسائل پیچیده منطقی."
+          "description": "Ù…Ø¯Ù„ Ø§Ø³ØªØ¯Ù„Ø§Ù„ÛŒ Ø¨ÛŒâ€ŒØ±Ù‚ÛŒØ¨ Ø¯Ø± Ø±Ø¯Ù‡ Ø²ÛŒØ± Û² Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ± Ø¨Ø±Ø§ÛŒ Ø­Ù„ Ù…Ø³Ø§Ø¦Ù„ Ù¾ÛŒÚ†ÛŒØ¯Ù‡ Ù…Ù†Ø·Ù‚ÛŒ."
         },
         {
           "model_id": "microsoft/Phi-3.5-mini-instruct",
@@ -342,7 +342,7 @@
           ],
           "served_model_name": "phi-3.5-mini",
           "category": "coding",
-          "category_label": "پردازش عمیق داده و استدلال فشرده (High-Density 3.8B)",
+          "category_label": "Ù¾Ø±Ø¯Ø§Ø²Ø´ Ø¹Ù…ÛŒÙ‚ Ø¯Ø§Ø¯Ù‡ Ùˆ Ø§Ø³ØªØ¯Ù„Ø§Ù„ ÙØ´Ø±Ø¯Ù‡ (High-Density 3.8B)",
           "benchmark_score": "MMLU 69.0 / MT-Bench 8.2",
           "supported_roles": [
             "coding-model",
@@ -355,7 +355,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.92,
-          "description": "مدل فشرده ۳.۸ میلیارد پارامتری مایکروسافت با عملکردی نزدیک به مدل‌های بزرگتر."
+          "description": "Ù…Ø¯Ù„ ÙØ´Ø±Ø¯Ù‡ Û³.Û¸ Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ù…Ø§ÛŒÚ©Ø±ÙˆØ³Ø§ÙØª Ø¨Ø§ Ø¹Ù…Ù„Ú©Ø±Ø¯ÛŒ Ù†Ø²Ø¯ÛŒÚ© Ø¨Ù‡ Ù…Ø¯Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø²Ø±Ú¯ØªØ±."
         },
         {
           "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
@@ -366,7 +366,7 @@
           ],
           "served_model_name": "qwen-math-1.5b",
           "category": "reasoning",
-          "category_label": "محاسبات و اثبات‌های تخصصی ریاضی (Qwen Math 1.5B)",
+          "category_label": "Ù…Ø­Ø§Ø³Ø¨Ø§Øª Ùˆ Ø§Ø«Ø¨Ø§Øªâ€ŒÙ‡Ø§ÛŒ ØªØ®ØµØµÛŒ Ø±ÛŒØ§Ø¶ÛŒ (Qwen Math 1.5B)",
           "benchmark_score": "MATH 79.8 / GSM8K 84.8",
           "supported_roles": [
             "reasoning-model",
@@ -377,7 +377,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.85,
-          "description": "مدل تخصصی فرمول‌ها، انتگرال‌ها و تحلیل‌های آماری و ریاضی."
+          "description": "Ù…Ø¯Ù„ ØªØ®ØµØµÛŒ ÙØ±Ù…ÙˆÙ„â€ŒÙ‡Ø§ØŒ Ø§Ù†ØªÚ¯Ø±Ø§Ù„â€ŒÙ‡Ø§ Ùˆ ØªØ­Ù„ÛŒÙ„â€ŒÙ‡Ø§ÛŒ Ø¢Ù…Ø§Ø±ÛŒ Ùˆ Ø±ÛŒØ§Ø¶ÛŒ."
         },
         {
           "model_id": "google/gemma-2-2b-it",
@@ -388,7 +388,7 @@
           ],
           "served_model_name": "gemma-2b",
           "category": "general",
-          "category_label": "دستیار فشرده گوگل (Gemma-2 2.6B)",
+          "category_label": "Ø¯Ø³ØªÛŒØ§Ø± ÙØ´Ø±Ø¯Ù‡ Ú¯ÙˆÚ¯Ù„ (Gemma-2 2.6B)",
           "benchmark_score": "MMLU 56.1 / Lightweight",
           "supported_roles": [
             "general-model",
@@ -400,7 +400,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.88,
-          "description": "معماری پیشرفته Gemma 2 با بازدهی بالا برای سیستم‌های با حافظه گرافیک محدود."
+          "description": "Ù…Ø¹Ù…Ø§Ø±ÛŒ Ù¾ÛŒØ´Ø±ÙØªÙ‡ Gemma 2 Ø¨Ø§ Ø¨Ø§Ø²Ø¯Ù‡ÛŒ Ø¨Ø§Ù„Ø§ Ø¨Ø±Ø§ÛŒ Ø³ÛŒØ³ØªÙ…â€ŒÙ‡Ø§ÛŒ Ø¨Ø§ Ø­Ø§ÙØ¸Ù‡ Ú¯Ø±Ø§ÙÛŒÚ© Ù…Ø­Ø¯ÙˆØ¯."
         },
         {
           "model_id": "meta-llama/Llama-3.2-1B-Instruct",
@@ -411,7 +411,7 @@
           ],
           "served_model_name": "llama-1b",
           "category": "general",
-          "category_label": "سبک‌ترین مدل لاما ۳.۲ (Llama 3.2 1B)",
+          "category_label": "Ø³Ø¨Ú©â€ŒØªØ±ÛŒÙ† Ù…Ø¯Ù„ Ù„Ø§Ù…Ø§ Û³.Û² (Llama 3.2 1B)",
           "benchmark_score": "MMLU 49.3 / Ultra-Fast",
           "supported_roles": [
             "general-model",
@@ -422,7 +422,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 16,
           "gpu_memory_utilization": 0.8,
-          "description": "مدل ۱ میلیارد پارامتری متا با سرعت پاسخ‌دهی بالای ۱۰۰ توکن بر ثانیه."
+          "description": "Ù…Ø¯Ù„ Û± Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ Ù…ØªØ§ Ø¨Ø§ Ø³Ø±Ø¹Øª Ù¾Ø§Ø³Ø®â€ŒØ¯Ù‡ÛŒ Ø¨Ø§Ù„Ø§ÛŒ Û±Û°Û° ØªÙˆÚ©Ù† Ø¨Ø± Ø«Ø§Ù†ÛŒÙ‡."
         },
         {
           "model_id": "BAAI/bge-m3",
@@ -433,7 +433,7 @@
           ],
           "served_model_name": "bge-m3",
           "category": "rag",
-          "category_label": "مدل پرچمدار امبدینگ چندزبانه و متراکم (BGE-M3 Embeddings)",
+          "category_label": "Ù…Ø¯Ù„ Ù¾Ø±Ú†Ù…Ø¯Ø§Ø± Ø§Ù…Ø¨Ø¯ÛŒÙ†Ú¯ Ú†Ù†Ø¯Ø²Ø¨Ø§Ù†Ù‡ Ùˆ Ù…ØªØ±Ø§Ú©Ù… (BGE-M3 Embeddings)",
           "benchmark_score": "MTEB 64.1 / Top Retrieval",
           "supported_roles": [
             "rag-model"
@@ -443,7 +443,7 @@
           "max_model_len": 8192,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.5,
-          "description": "تولید بردار‌های معنایی چندزبانه برای جستجو در اسناد و بازیابی دقیق RAG."
+          "description": "ØªÙˆÙ„ÛŒØ¯ Ø¨Ø±Ø¯Ø§Ø±â€ŒÙ‡Ø§ÛŒ Ù…Ø¹Ù†Ø§ÛŒÛŒ Ú†Ù†Ø¯Ø²Ø¨Ø§Ù†Ù‡ Ø¨Ø±Ø§ÛŒ Ø¬Ø³ØªØ¬Ùˆ Ø¯Ø± Ø§Ø³Ù†Ø§Ø¯ Ùˆ Ø¨Ø§Ø²ÛŒØ§Ø¨ÛŒ Ø¯Ù‚ÛŒÙ‚ RAG."
         },
         {
           "model_id": "Qwen/Qwen3-Embedding-0.6B",
@@ -454,7 +454,7 @@
           ],
           "served_model_name": "qwen3-embed-0.6b",
           "category": "rag",
-          "category_label": "امبدینگ فوق‌سریع نسل ۳ کوئن (Qwen3 Embeddings 0.6B)",
+          "category_label": "Ø§Ù…Ø¨Ø¯ÛŒÙ†Ú¯ ÙÙˆÙ‚â€ŒØ³Ø±ÛŒØ¹ Ù†Ø³Ù„ Û³ Ú©ÙˆØ¦Ù† (Qwen3 Embeddings 0.6B)",
           "benchmark_score": "MTEB High / Ultra-Low VRAM",
           "supported_roles": [
             "rag-model"
@@ -464,7 +464,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.4,
-          "description": "مدل برداری بسیار کم‌مصرف برای ایندکس و تطابق سریع اسناد سازمانی."
+          "description": "Ù…Ø¯Ù„ Ø¨Ø±Ø¯Ø§Ø±ÛŒ Ø¨Ø³ÛŒØ§Ø± Ú©Ù…â€ŒÙ…ØµØ±Ù Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ†Ø¯Ú©Ø³ Ùˆ ØªØ·Ø§Ø¨Ù‚ Ø³Ø±ÛŒØ¹ Ø§Ø³Ù†Ø§Ø¯ Ø³Ø§Ø²Ù…Ø§Ù†ÛŒ."
         },
         {
           "model_id": "Qwen/Qwen3-Reranker-0.6B",
@@ -475,7 +475,7 @@
           ],
           "served_model_name": "qwen3-rerank-0.6b",
           "category": "rag",
-          "category_label": "بازرتبه‌بندی دقیق اسناد RAG (Qwen3 Reranker 0.6B)",
+          "category_label": "Ø¨Ø§Ø²Ø±ØªØ¨Ù‡â€ŒØ¨Ù†Ø¯ÛŒ Ø¯Ù‚ÛŒÙ‚ Ø§Ø³Ù†Ø§Ø¯ RAG (Qwen3 Reranker 0.6B)",
           "benchmark_score": "Cross-Encoder Top Accuracy",
           "supported_roles": [
             "rag-model"
@@ -485,7 +485,7 @@
           "max_model_len": 4096,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.4,
-          "description": "فیلتر و رتبه‌بندی مجدد قطعات متنی بازیابی‌شده پیش از ارسال به مدل اصلی."
+          "description": "ÙÛŒÙ„ØªØ± Ùˆ Ø±ØªØ¨Ù‡â€ŒØ¨Ù†Ø¯ÛŒ Ù…Ø¬Ø¯Ø¯ Ù‚Ø·Ø¹Ø§Øª Ù…ØªÙ†ÛŒ Ø¨Ø§Ø²ÛŒØ§Ø¨ÛŒâ€ŒØ´Ø¯Ù‡ Ù¾ÛŒØ´ Ø§Ø² Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ù…Ø¯Ù„ Ø§ØµÙ„ÛŒ."
         }
       ]
     },
@@ -505,7 +505,7 @@
           ],
           "served_model_name": "qwen-7b",
           "category": "general",
-          "category_label": "مدل پرچمدار استاندارد سازمانی (7B AWQ - همه‌منظوره)",
+          "category_label": "Ù…Ø¯Ù„ Ù¾Ø±Ú†Ù…Ø¯Ø§Ø± Ø§Ø³ØªØ§Ù†Ø¯Ø§Ø±Ø¯ Ø³Ø§Ø²Ù…Ø§Ù†ÛŒ (7B AWQ - Ù‡Ù…Ù‡â€ŒÙ…Ù†Ø¸ÙˆØ±Ù‡)",
           "benchmark_score": "MMLU 74.2 / Production Standard",
           "supported_roles": [
             "general-model",
@@ -518,7 +518,7 @@
           "max_model_len": 16384,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.9,
-          "description": "استاندارد اصلی هوش مصنوعی سازمانی با کیفیت فوق‌العاده در پاسخ‌گویی به اسناد و مکالمات."
+          "description": "Ø§Ø³ØªØ§Ù†Ø¯Ø§Ø±Ø¯ Ø§ØµÙ„ÛŒ Ù‡ÙˆØ´ Ù…ØµÙ†ÙˆØ¹ÛŒ Ø³Ø§Ø²Ù…Ø§Ù†ÛŒ Ø¨Ø§ Ú©ÛŒÙÛŒØª ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ø¯Ø± Ù¾Ø§Ø³Ø®â€ŒÚ¯ÙˆÛŒÛŒ Ø¨Ù‡ Ø§Ø³Ù†Ø§Ø¯ Ùˆ Ù…Ú©Ø§Ù„Ù…Ø§Øª."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
@@ -529,7 +529,7 @@
           ],
           "served_model_name": "deepseek-r1-7b",
           "category": "reasoning",
-          "category_label": "استدلال پیشرفته ریاضی و منطقی (DeepSeek-R1 7B)",
+          "category_label": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ù¾ÛŒØ´Ø±ÙØªÙ‡ Ø±ÛŒØ§Ø¶ÛŒ Ùˆ Ù…Ù†Ø·Ù‚ÛŒ (DeepSeek-R1 7B)",
           "benchmark_score": "MATH 92.8 / AIME 55.5",
           "supported_roles": [
             "reasoning-model",
@@ -541,7 +541,7 @@
           "max_model_len": 16384,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.9,
-          "description": "قدرتمندترین مدل استدلال منطقی و حل مسئله در رده ۷ میلیارد پارامتر."
+          "description": "Ù‚Ø¯Ø±ØªÙ…Ù†Ø¯ØªØ±ÛŒÙ† Ù…Ø¯Ù„ Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ù…Ù†Ø·Ù‚ÛŒ Ùˆ Ø­Ù„ Ù…Ø³Ø¦Ù„Ù‡ Ø¯Ø± Ø±Ø¯Ù‡ Û· Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±."
         },
         {
           "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct-AWQ",
@@ -553,7 +553,7 @@
           ],
           "served_model_name": "qwen-coder-7b",
           "category": "coding",
-          "category_label": "برنامه‌نویسی و معماری نرم‌افزار تخصصی (7B Coder)",
+          "category_label": "Ø¨Ø±Ù†Ø§Ù…Ù‡â€ŒÙ†ÙˆÛŒØ³ÛŒ Ùˆ Ù…Ø¹Ù…Ø§Ø±ÛŒ Ù†Ø±Ù…â€ŒØ§ÙØ²Ø§Ø± ØªØ®ØµØµÛŒ (7B Coder)",
           "benchmark_score": "HumanEval 84.1 / EvalPlus 78.4",
           "supported_roles": [
             "coding-model",
@@ -564,7 +564,7 @@
           "max_model_len": 16384,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.9,
-          "description": "تولید کدهای پیشرفته در بیش از ۹۰ زبان برنامه‌نویسی و تحلیل باگ‌ها."
+          "description": "ØªÙˆÙ„ÛŒØ¯ Ú©Ø¯Ù‡Ø§ÛŒ Ù¾ÛŒØ´Ø±ÙØªÙ‡ Ø¯Ø± Ø¨ÛŒØ´ Ø§Ø² Û¹Û° Ø²Ø¨Ø§Ù† Ø¨Ø±Ù†Ø§Ù…Ù‡â€ŒÙ†ÙˆÛŒØ³ÛŒ Ùˆ ØªØ­Ù„ÛŒÙ„ Ø¨Ø§Ú¯â€ŒÙ‡Ø§."
         }
       ]
     },
@@ -583,7 +583,7 @@
           ],
           "served_model_name": "qwen-14b",
           "category": "general",
-          "category_label": "مدل بزرگ سازمانی ۱۴ میلیارد پارامتری (14B AWQ)",
+          "category_label": "Ù…Ø¯Ù„ Ø¨Ø²Ø±Ú¯ Ø³Ø§Ø²Ù…Ø§Ù†ÛŒ Û±Û´ Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ (14B AWQ)",
           "benchmark_score": "MMLU 79.5 / Near GPT-4o-mini",
           "supported_roles": [
             "general-model",
@@ -596,7 +596,7 @@
           "max_model_len": 32768,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.92,
-          "description": "هوش استنتاجی سطح بالا برای تحلیل قراردادها و متن‌های فوق‌العاده حجیم."
+          "description": "Ù‡ÙˆØ´ Ø§Ø³ØªÙ†ØªØ§Ø¬ÛŒ Ø³Ø·Ø­ Ø¨Ø§Ù„Ø§ Ø¨Ø±Ø§ÛŒ ØªØ­Ù„ÛŒÙ„ Ù‚Ø±Ø§Ø±Ø¯Ø§Ø¯Ù‡Ø§ Ùˆ Ù…ØªÙ†â€ŒÙ‡Ø§ÛŒ ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ø­Ø¬ÛŒÙ…."
         },
         {
           "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
@@ -607,7 +607,7 @@
           ],
           "served_model_name": "deepseek-r1-14b",
           "category": "reasoning",
-          "category_label": "استدلال فوق‌سنگین و پیچیده ریاضی (14B Reasoning)",
+          "category_label": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ ÙÙˆÙ‚â€ŒØ³Ù†Ú¯ÛŒÙ† Ùˆ Ù¾ÛŒÚ†ÛŒØ¯Ù‡ Ø±ÛŒØ§Ø¶ÛŒ (14B Reasoning)",
           "benchmark_score": "MATH 93.9 / AIME 69.7",
           "supported_roles": [
             "reasoning-model",
@@ -619,7 +619,7 @@
           "max_model_len": 32768,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.92,
-          "description": "استدلال در سطح رقابت‌های بین‌المللی المپیاد ریاضی با زنجیره تفکر عمیق."
+          "description": "Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ø¯Ø± Ø³Ø·Ø­ Ø±Ù‚Ø§Ø¨Øªâ€ŒÙ‡Ø§ÛŒ Ø¨ÛŒÙ†â€ŒØ§Ù„Ù…Ù„Ù„ÛŒ Ø§Ù„Ù…Ù¾ÛŒØ§Ø¯ Ø±ÛŒØ§Ø¶ÛŒ Ø¨Ø§ Ø²Ù†Ø¬ÛŒØ±Ù‡ ØªÙÚ©Ø± Ø¹Ù…ÛŒÙ‚."
         },
         {
           "model_id": "Qwen/Qwen2.5-32B-Instruct-AWQ",
@@ -630,7 +630,7 @@
           ],
           "served_model_name": "qwen-32b",
           "category": "general",
-          "category_label": "پرچمدار ۳۲ میلیارد پارامتری فوق‌پیشرفته (32B AWQ)",
+          "category_label": "Ù¾Ø±Ú†Ù…Ø¯Ø§Ø± Û³Û² Ù…ÛŒÙ„ÛŒØ§Ø±Ø¯ Ù¾Ø§Ø±Ø§Ù…ØªØ±ÛŒ ÙÙˆÙ‚â€ŒÙ¾ÛŒØ´Ø±ÙØªÙ‡ (32B AWQ)",
           "benchmark_score": "MMLU 83.5 / Flagship Intelligence",
           "supported_roles": [
             "general-model",
@@ -643,9 +643,10 @@
           "max_model_len": 32768,
           "max_num_seqs": 32,
           "gpu_memory_utilization": 0.92,
-          "description": "نهایت قدرت پردازش زبانی و استدلال سازمانی نزدیک به مدل‌های تجاری پیشرو."
+          "description": "Ù†Ù‡Ø§ÛŒØª Ù‚Ø¯Ø±Øª Ù¾Ø±Ø¯Ø§Ø²Ø´ Ø²Ø¨Ø§Ù†ÛŒ Ùˆ Ø§Ø³ØªØ¯Ù„Ø§Ù„ Ø³Ø§Ø²Ù…Ø§Ù†ÛŒ Ù†Ø²Ø¯ÛŒÚ© Ø¨Ù‡ Ù…Ø¯Ù„â€ŒÙ‡Ø§ÛŒ ØªØ¬Ø§Ø±ÛŒ Ù¾ÛŒØ´Ø±Ùˆ."
         }
       ]
     }
   ]
 }
+
