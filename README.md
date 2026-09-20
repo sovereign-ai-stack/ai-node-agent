@@ -1,140 +1,87 @@
-# ⚡ عامل هوشمند نود پردازش گرافیکی (Enterprise AI Node Agent)
-## راهنمای جامع استقرار در محیط عملیاتی (Production Deployment Guide)
-
-این پکیج یک عامل سبک و خودکار (Standalone Agent) است که روی سرورها و رایانه‌های مجهز به کارت گرافیک انویدیا اجرا شده و قدرت پردازش آن‌ها را از طریق شبکه به **پلتفرم مرکزی هوش مصنوعی (Central Control Plane)** پیوند می‌زند.
-
----
-
-### ۱. قابلیت‌های کلیدی در پروداکشن
-
-* **کشف خودکار سخت‌افزار (Auto Hardware Detection):** اندازه‌گیری خودکار VRAM کارت گرافیک، نسل پردازنده و انتخاب بهترین معماری کوانتیزاسیون.
-* **ثبت خودکار در رجیستری مرکزی:** ارسال مدل و متادیتا به رجیستری مرکزی (`:8200`) و تزریق خودکار به مسیرهای پروکسی LiteLLM در کمتر از ۱ ثانیه.
-* **ضربان قلب پیوسته (Heartbeat):** ارسال گزارش سلامت و حافظه هر ۱۵ ثانیه برای مدیریت توزیع بار و Failover.
-* **استقرار کاملاً آفلاین (Air-Gapped Ready):** امکان لود وزن‌های مدل از دیسک محلی و ایمیج آفلاین بدون نیاز به اینترنت.
+﻿<div align="center">
+  <h1>⚙️ Sovereign AI: Node Agent</h1>
+  <p><strong>The High-Performance Distributed Inference Engine for the Sovereign AI Ecosystem</strong></p>
+</div>
 
 ---
 
-### ۲. پیش‌نیازهای سرور یا سیستم گرافیکی
+## 🚀 Overview
+The **AI Node Agent** is the raw execution muscle of the Sovereign AI infrastructure. It is designed to run completely offline, air-gapped, and distributed across multiple machines in a zero-trust Mesh Network. 
 
-1. **درایور انویدیا (NVIDIA Driver):** نسخه 535 یا بالاتر با پشتیبانی از CUDA 12.1+
-   ```bash
-   nvidia-smi
-   ```
-2. **داکر و تولکیت کانتینر انویدیا (NVIDIA Container Toolkit):**
-   ```bash
-   # بررسی فعال بودن انویدیا در داکر
-   docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
-   ```
-3. **پایتون:** نسخه 3.10 یا بالاتر
+Instead of requiring monolithic multi-GPU data center servers, this agent allows you to cluster consumer-grade GPUs (via Ray and vLLM) and expose them securely to the Central Control Plane over Tailscale/WireGuard. The node handles complex logic, generating tokens while the control plane orchestrates the user interaction.
+
+### 🎬 System Architecture Demo
+<video src="./assets/demo.mp4" width="100%" controls></video>
 
 ---
 
-### ۳. شبکه‌سازی امن کلاستر با Tailscale (حیاتی)
+## 🧠 Core Architecture & Capabilities
 
-برای اینکه این نود بتواند از پشت فایروال، NAT یا اینترنت خانگی/سازمانی بدون نیاز به آی‌پی پابلیک به سرور مرکزی متصل شود:
+### 1. High-Throughput Inference (vLLM)
+Powered by LLM to achieve massive token-per-second rates using **PagedAttention** and **Continuous Batching**.
+- Fully optimized for quantized models (e.g., AWQ, GPTQ) to run massive models (like Qwen-2.5-3B or DeepSeek-R1) on limited VRAM.
+- Allows highly constrained memory footprints using variables like gpu_memory_utilization=0.5.
 
-#### گام ۱: نصب و ورود به شبکه Tailscale
-```bash
-# نصب روی سرور لینوکس نود
-curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up
+### 2. Distributed GPU Clustering (Ray)
+Natively supports multi-GPU and multi-node clustering without writing complex socket code.
+- **Tensor Parallelism (TP):** Slice massive weight matrices across GPUs on the same motherboard for ultra-low latency.
+- **Pipeline Parallelism (PP):** Distribute entire transformer layers across completely different physical servers in your mesh network.
 
-# یا در ویندوز: نصب نرم‌افزار Tailscale از وبسایت رسمی و لاگین با همان اکانت سرور مرکزی
-```
+### 3. Headless & Secure Registration
+Joins the Sovereign AI Mesh Network via Tailscale. Requires no public IPs or open internet ports. The node automatically discovers the Central Control Plane and securely registers its hardware capabilities.
+<br><img src="./assets/node-registration.png" width="600" alt="Node Registration Process" />
 
-#### گام ۲: تست دسترسی به سرور مرکزی
-آدرس IP سرور مرکزی در شبکه Tailscale (مثلاً `100.115.80.12`) را پینگ کنید:
-```bash
-curl -I http://100.115.80.12:8200/health
-# باید پاسخ HTTP/1.1 200 OK دریافت کنید.
-```
-
----
-
-### ۴. پیکربندی متغیرهای محیطی نود (`.env`)
-
-فایل `.env.example` را به `.env` کپی کرده و مقادیر را بر اساس سیستم خود پر کنید:
-
-```ini
-# ۱. آدرس رجیستری سرور مرکزی (در شبکه Tailscale یا محلی)
-GATEWAY_URL=http://100.115.80.12:8200
-
-# ۲. شناسه اختصاصی و خوانای این نود
-NODE_ID=worker-rtx4090-node1
-
-# ۳. پورت سرویس‌دهی موتور vLLM روی این سیستم
-VLLM_PORT=8000
-
-# ۴. مسیر ذخیره مدل‌های دانلود شده روی هارد دیسک (برای عملکرد آفلاین)
-LOCAL_MODEL_PATH=/data/models/Qwen2.5-Coder-7B-Instruct
-
-# ۵. حالت غیرتعاملی (بدون سوال و جواب - مناسب سرورهای پروداکشن)
-NON_INTERACTIVE=true
-```
+### 4. Smart Hardware Discovery
+When the node starts, it executes a 4-tier hardware discovery mechanism to ensure it initializes safely even in constrained environments:
+NVML -> 
+vidia-smi -> PyTorch CUDA -> WMI (Windows).
 
 ---
 
-### ۵. روش‌های استقرار و اجرا
+## 🛠️ Technology Stack
+- **Engine:** vLLM, PyTorch
+- **Models:** HuggingFace ecosystem (Qwen-2.5, DeepSeek-R1, etc.)
+- **Orchestration:** Ray (for Distributed Compute)
+- **Network:** Tailscale (WireGuard)
+- **Runtime:** Docker / Python 3.10+
 
-#### روش ۱: اجرای مستقیم با خط فرمان (CLI)
-```bash
-cd ai-node-agent
+---
+
+## 🚀 How to Run the AI Node Agent
+
+### Prerequisites
+- NVIDIA GPU(s) with CUDA drivers installed.
+- Python 3.10+ (Linux/WSL2 highly recommended for LLM and Ray).
+- The central-control-plane must be running and accessible over the Mesh Network.
+
+### 1. Installation
+Clone the repository and install the required dependencies:
+\\\ash
 pip install -r requirements.txt
+# Ensure you have vllm and ray installed specifically for your CUDA version
+\\\
 
-# اجرای نود و اتصال خودکار به سرور مرکزی
-python node_agent.py --gateway-url http://100.115.80.12:8200
-```
+### 2. Configure Environment
+Set up your .env file pointing to the Central Control Plane's LiteLLM and Registry instances:
+\\\env
+CENTRAL_PLANE_IP=100.x.x.x
+LITELLM_API_KEY=sk-sovereign-master
+MODEL_PATH=/models/Qwen2.5-3B-Instruct-AWQ
+MAX_SEQ_LEN=1024
+\\\
 
-#### روش ۲: اجرای خودکار به عنوان سرویس سیستمی دائم (Linux systemd)
-برای اینکه با ریستارت شدن سرور، نود ایجنت به صورت خودکار بالا بیاید:
+### 3. Start the Node
+To run the node in standard single-GPU mode:
+\\\ash
+python api_utils.py --model_tag Qwen/Qwen2.5-3B-Instruct-AWQ --quantization awq --gpu_memory_utilization 0.5
+\\\
 
-یک فایل سرویس در `/etc/systemd/system/ai-node-agent.service` بسازید:
-```ini
-[Unit]
-Description=Enterprise AI Node Agent Daemon
-After=network.target tailscaled.service docker.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/ai-node-agent
-ExecStart=/usr/bin/python3 /opt/ai-node-agent/node_agent.py --gateway-url http://100.115.80.12:8200 --non-interactive
-Restart=always
-RestartSec=10
-EnvironmentFile=/opt/ai-node-agent/.env
-
-[Install]
-WantedBy=multi-user.target
-```
-
-فعال‌سازی و شروع سرویس:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable ai-node-agent
-sudo systemctl start ai-node-agent
-
-# مشاهده لاگ‌های زنده نود
-sudo journalctl -u ai-node-agent -f
-```
-
-#### روش ۳: اجرای سریع در ویندوز
-روی فایل `run.bat` دابل‌کلیک کنید یا در PowerShell اجرا کنید:
-```powershell
-.\run.bat
-```
-
----
-
-### ۶. پایش و عیب‌یابی نود در محیط واقعی
-
-* **بررسی مصرف حافظه گرافیکی و دما:**
-  ```bash
-  watch -n 1 nvidia-smi
-  ```
-* **بررسی کانتینر vLLM در حال اجرا:**
-  ```bash
-  docker ps | grep vllm
-  docker logs -f vllm-worker
-  ```
-* **بررسی ثبت نود در سرور مرکزی:**
-  با مراجعه به پنل وب ادمین در سرور مرکزی (`http://<CENTRAL_IP>:8400/admin`)، نود خود را در تب نودهای فعال مشاهده خواهید کرد.
+### 4. Multi-Node Distributed Mode (Pipeline Parallelism)
+If you have multiple machines running the agent:
+1. Start the Ray Head node on Machine A: \ay start --head\
+2. Connect Machine B to the Head: \ay start --address='<Machine A Tailscale IP>:6379'\
+3. Launch \LLM\ on Machine A with Ray enabled:
+\\\ash
+python api_utils.py --pipeline-parallel-size 2
+\\\
+The node agent will automatically handle distributing the transformer layers across the network!
