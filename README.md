@@ -1,68 +1,45 @@
-﻿<div align="center">
-  <h1>⚙️ Sovereign AI: Node Agent</h1>
-  <p><strong>The High-Performance Distributed Inference Engine for the Sovereign AI Ecosystem</strong></p>
-</div>
+﻿# Sovereign AI Node Agent
 
----
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![vLLM](https://img.shields.io/badge/vLLM-0.6.0-blue.svg)](https://github.com/vllm-project/vllm)
+[![Ray](https://img.shields.io/badge/Ray-Distributed-009688.svg?style=flat)](https://www.ray.io/)
 
-## 🚀 Overview
-The **AI Node Agent** is the raw execution muscle of the Sovereign AI infrastructure. It is designed to run completely offline, air-gapped, and distributed across multiple machines in a zero-trust Mesh Network. 
+Sovereign AI Node Agent is a headless, high-throughput distributed inference engine for self-hosted LLM deployments. It virtualizes consumer-grade GPUs into a unified computing cluster, connects securely to the Central Control Plane over a zero-trust Mesh network, and executes LLM generation using PagedAttention and Continuous Batching.
 
-Instead of requiring monolithic multi-GPU data center servers, this agent allows you to cluster consumer-grade GPUs (via Ray and vLLM) and expose them securely to the Central Control Plane over Tailscale/WireGuard. The node handles complex logic, generating tokens while the control plane orchestrates the user interaction.
+The repository contains the vLLM wrapper, Ray orchestration scripts, hardware discovery protocols, and Mesh networking integration. It contains no embedded model weights or central API logic.
 
-### 🎬 System Architecture Demo
-<video src="./assets/demo.mp4" width="100%" controls></video>
+## Features
 
----
+- **High-Throughput Inference:** Achieves massive token-per-second rates via \LLM\, optimized for AWQ/GPTQ quantization on constrained VRAM.
+- **Distributed GPU Clustering:** Natively supports multi-GPU and multi-node clustering using \Ray\.
+- **Pipeline Parallelism (PP):** Distributes transformer layers across physically distinct servers in the Mesh network.
+- **Tensor Parallelism (TP):** Slices massive weight matrices across local GPUs for ultra-low latency.
+- **Secure Mesh Registration:** Joins the Sovereign AI ecosystem via Tailscale without exposing public IPs or open internet ports.
+- **Resilient Hardware Discovery:** Four-tier fallback hardware detection (\NVML\ -> \
+vidia-smi\ -> \PyTorch CUDA\ -> \WMI\) for robust initialization.
 
-## 🧠 Core Architecture & Capabilities
+## Requirements
 
-### 1. High-Throughput Inference (vLLM)
-Powered by LLM to achieve massive token-per-second rates using **PagedAttention** and **Continuous Batching**.
-- Fully optimized for quantized models (e.g., AWQ, GPTQ) to run massive models (like Qwen-2.5-3B or DeepSeek-R1) on limited VRAM.
-- Allows highly constrained memory footprints using variables like gpu_memory_utilization=0.5.
+- Git
+- Python 3.10 or newer (Linux / WSL2 highly recommended)
+- NVIDIA GPU with compatible CUDA Toolkit
+- [uv](https://docs.astral.sh/uv/) or \pip\
+- Tailscale (or WireGuard) configured for Mesh node connections
 
-### 2. Distributed GPU Clustering (Ray)
-Natively supports multi-GPU and multi-node clustering without writing complex socket code.
-- **Tensor Parallelism (TP):** Slice massive weight matrices across GPUs on the same motherboard for ultra-low latency.
-- **Pipeline Parallelism (PP):** Distribute entire transformer layers across completely different physical servers in your mesh network.
+## Quick start
 
-### 3. Headless & Secure Registration
-Joins the Sovereign AI Mesh Network via Tailscale. Requires no public IPs or open internet ports. The node automatically discovers the Central Control Plane and securely registers its hardware capabilities.
-<br><img src="./assets/node-registration.png" width="600" alt="Node Registration Process" />
+Clone the repository and install the dependencies on your worker node:
 
-### 4. Smart Hardware Discovery
-When the node starts, it executes a 4-tier hardware discovery mechanism to ensure it initializes safely even in constrained environments:
-NVML -> 
-vidia-smi -> PyTorch CUDA -> WMI (Windows).
-
----
-
-## 🛠️ Technology Stack
-- **Engine:** vLLM, PyTorch
-- **Models:** HuggingFace ecosystem (Qwen-2.5, DeepSeek-R1, etc.)
-- **Orchestration:** Ray (for Distributed Compute)
-- **Network:** Tailscale (WireGuard)
-- **Runtime:** Docker / Python 3.10+
-
----
-
-## 🚀 How to Run the AI Node Agent
-
-### Prerequisites
-- NVIDIA GPU(s) with CUDA drivers installed.
-- Python 3.10+ (Linux/WSL2 highly recommended for LLM and Ray).
-- The central-control-plane must be running and accessible over the Mesh Network.
-
-### 1. Installation
-Clone the repository and install the required dependencies:
 \\\ash
+git clone https://github.com/sovereign-ai-stack/ai-node-agent.git
+cd ai-node-agent
+
+# Install dependencies (vLLM and Ray)
 pip install -r requirements.txt
-# Ensure you have vllm and ray installed specifically for your CUDA version
 \\\
 
-### 2. Configure Environment
-Set up your .env file pointing to the Central Control Plane's LiteLLM and Registry instances:
+Configure your \.env\ pointing to the Central Control Plane:
+
 \\\env
 CENTRAL_PLANE_IP=100.x.x.x
 LITELLM_API_KEY=sk-sovereign-master
@@ -70,18 +47,39 @@ MODEL_PATH=/models/Qwen2.5-3B-Instruct-AWQ
 MAX_SEQ_LEN=1024
 \\\
 
-### 3. Start the Node
-To run the node in standard single-GPU mode:
+Start the node in standard single-GPU mode:
+
 \\\ash
 python api_utils.py --model_tag Qwen/Qwen2.5-3B-Instruct-AWQ --quantization awq --gpu_memory_utilization 0.5
 \\\
 
-### 4. Multi-Node Distributed Mode (Pipeline Parallelism)
-If you have multiple machines running the agent:
-1. Start the Ray Head node on Machine A: \ay start --head\
-2. Connect Machine B to the Head: \ay start --address='<Machine A Tailscale IP>:6379'\
-3. Launch \LLM\ on Machine A with Ray enabled:
-\\\ash
-python api_utils.py --pipeline-parallel-size 2
-\\\
-The node agent will automatically handle distributing the transformer layers across the network!
+## Distributed Parallelism
+
+The agent natively supports slicing models across multiple distinct hardware nodes using Ray.
+
+To initialize Pipeline Parallelism across two separate machines:
+
+1. On **Machine A**, start the Ray Head:
+   \\\ash
+   ray start --head --port=6379
+   \\\
+
+2. On **Machine B**, connect to the Head via the Mesh network:
+   \\\ash
+   ray start --address='<Machine_A_Tailscale_IP>:6379'
+   \\\
+
+3. On **Machine A**, launch the vLLM agent with parallelism enabled:
+   \\\ash
+   python api_utils.py --pipeline-parallel-size 2
+   \\\
+
+The agent automatically distributes the transformer layers across the network.
+
+## Secure Registration
+
+Upon successful initialization, the agent securely handshakes with the Central Control Plane. It registers its model capabilities and hardware limits automatically over the private network.
+
+![Node Registration Workflow](./assets/node-registration.png)
+
+No external API exposure is required.
