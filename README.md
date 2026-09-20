@@ -4,8 +4,7 @@
 [![vLLM](https://img.shields.io/badge/vLLM-0.6.0-blue.svg)](https://github.com/vllm-project/vllm)
 [![Ray Distributed](https://img.shields.io/badge/Ray-2.30+-009688.svg?style=flat)](https://www.ray.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Security Policy](https://img.shields.io/badge/security-policy-red.svg)](SECURITY.md)
-[![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-orange.svg)](CODE_OF_CONDUCT.md)
+
 
 Sovereign AI Node Agent is an autonomous, high-throughput distributed inference engine for self-hosted LLM deployments. Built for heterogeneous on-premise infrastructure, it benchmarks local GPU silicon, detects local offline model weights and Docker archives, initializes optimized vLLM runtimes, and seamlessly registers itself with the Central Control Plane over a secure zero-trust WireGuard mesh.
 
@@ -31,7 +30,6 @@ The repository contains the autonomous lifecycle orchestrator, hardware diagnost
 - [Quick Start](#quick-start)
 - [Interactive Node Lifecycle](#interactive-node-lifecycle)
 - [Project Structure](#project-structure)
-- [Governance](#governance)
 - [License](#license)
 
 ---
@@ -193,14 +191,6 @@ ai-node-agent/
 ├── requirements.txt        # Python dependency manifest
 └── assets/                 # Architecture diagrams and registration telemetry
 ```
-
----
-
-## Governance
-
-- Review our [Code of Conduct](CODE_OF_CONDUCT.md) for community participation standards.
-- Check the [Contributing Guide](CONTRIBUTING.md) before submitting patches or feature requests.
-- Read our [Security Policy](SECURITY.md) for responsible vulnerability disclosure.
 
 ---
 
